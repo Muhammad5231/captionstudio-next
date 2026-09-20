@@ -37,8 +37,9 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = Field(default="sqlite:///./data/database/captionstudio.db")
 
-    # Storage
+    # Storage & Data
     STORAGE_ROOT: str = "./storage"
+    DATA_DIR: str = "./data"
 
     # Local Media Binaries
     FFMPEG_PATH: Optional[str] = "./ffmpeg.exe"
@@ -61,6 +62,16 @@ class Settings(BaseSettings):
     @property
     def storage_path(self) -> Path:
         path = (ROOT_DIR / self.STORAGE_ROOT).resolve()
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    @property
+    def storage_root(self) -> Path:
+        return self.storage_path
+
+    @property
+    def data_dir(self) -> Path:
+        path = (ROOT_DIR / self.DATA_DIR).resolve()
         path.mkdir(parents=True, exist_ok=True)
         return path
 

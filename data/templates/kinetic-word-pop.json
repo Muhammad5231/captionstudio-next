@@ -1,0 +1,52 @@
+{
+  "id": "kinetic-word-pop",
+  "name": "Pop Kinetic Pro",
+  "category": "KINETIC",
+  "description": "Dynamic word-by-word pop with 1.25x scale pulse on vocal pronunciation.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Arial",
+    "fontSize": 44,
+    "fontWeight": "800",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#FFE600",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#000000",
+    "strokeWidth": 6.5,
+    "shadowColor": "rgba(0,0,0,0.9)",
+    "shadowBlur": 8.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 75.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 3,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "word-pop",
+      "durationMs": 110,
+      "scale": 1.25
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#18181B",
+    "color": "#FFE600",
+    "borderColor": "#FFE600"
+  },
+  "tags": [
+    "kinetic",
+    "pop",
+    "pulse",
+    "speech-sync"
+  ]
+}

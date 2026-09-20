@@ -1,0 +1,52 @@
+{
+  "id": "viral-crimson-hype",
+  "name": "Crimson Hype",
+  "category": "VIRAL_BOLD",
+  "description": "High contrast aggressive red styling with thick black stroke and dynamic bounce.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Impact",
+    "fontSize": 46,
+    "fontWeight": "900",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#FF2A2A",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#000000",
+    "strokeWidth": 7.5,
+    "shadowColor": "rgba(0,0,0,0.9)",
+    "shadowBlur": 8.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 74.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 3,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "bounce",
+      "durationMs": 120,
+      "scale": 1.2
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#450A0A",
+    "color": "#FF2A2A",
+    "borderColor": "#FF2A2A"
+  },
+  "tags": [
+    "crimson",
+    "red",
+    "hype",
+    "high-contrast"
+  ]
+}

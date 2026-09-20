@@ -1,0 +1,52 @@
+{
+  "id": "cinematic-muted-gold",
+  "name": "Muted Historical Gold",
+  "category": "CINEMATIC",
+  "description": "Understated warm brass tones suited for period dramas.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Georgia",
+    "fontSize": 32,
+    "fontWeight": "600",
+    "fontStyle": "normal",
+    "textTransform": "none",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#DDA15E",
+    "highlightColor": "#DDA15E",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#211400",
+    "strokeWidth": 2.5,
+    "shadowColor": "rgba(0,0,0,0.75)",
+    "shadowBlur": 6.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 85.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 6,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "none",
+      "durationMs": 0,
+      "scale": 1.0
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#211504",
+    "color": "#DDA15E",
+    "borderColor": "#DDA15E"
+  },
+  "tags": [
+    "historical",
+    "period",
+    "brass",
+    "muted"
+  ]
+}

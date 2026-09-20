@@ -33,6 +33,8 @@ class Project(Base):
     width = Column(Integer, nullable=True)
     height = Column(Integer, nullable=True)
     language = Column(String(10), nullable=True, default="en")
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     created_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
@@ -40,6 +42,7 @@ class Project(Base):
     assets = relationship("ProjectAsset", back_populates="project", cascade="all, delete-orphan")
     caption_tracks = relationship("CaptionTrack", back_populates="project", cascade="all, delete-orphan")
     jobs = relationship("Job", back_populates="project", cascade="all, delete-orphan")
+    exports = relationship("Export", back_populates="project", cascade="all, delete-orphan")
 
 
 class ProjectAsset(Base):
@@ -69,6 +72,7 @@ class CaptionTrack(Base):
     name = Column(String(100), nullable=False, default="Default Track")
     language = Column(String(10), nullable=False, default="en")
     is_default = Column(Boolean, default=True)
+    style_spec = Column(Text, nullable=True)  # JSON-serialized CaptionRenderSpec
 
     created_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
@@ -118,6 +122,7 @@ class Job(Base):
     progress = Column(Float, nullable=False, default=0.0)
     message = Column(String(500), nullable=False, default="")
     error_details = Column(Text, nullable=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
     created_at = Column(DateTime(timezone=True), default=utc_now)
     started_at = Column(DateTime(timezone=True), nullable=True)
@@ -132,14 +137,55 @@ class User(Base):
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     username = Column(String(100), unique=True, nullable=False, default="local_user")
+    username = Column(String(100), nullable=True)
+    name = Column(String(100), nullable=False, default="Local User")
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    role = Column(String(50), nullable=False, default="USER")  # USER, ADMIN, SUPER_ADMIN
+    is_active = Column(Boolean, nullable=False, default=True)
+    last_active_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+    sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
+    projects = relationship("Project", backref="user")
+    exports = relationship("Export", backref="user")
+    favorites = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
 
 
 class Session(Base):
     __tablename__ = "sessions"
 
+    id = Column(String(64), primary_key=True)  # Secret session token
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+
+    user = relationship("User", back_populates="sessions")
+
+
+class Favorite(Base):
+    __tablename__ = "favorites"
+
     id = Column(String(36), primary_key=True, default=generate_uuid)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    template_id = Column(String(100), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+
+    user = relationship("User", back_populates="favorites")
+
+
+class CustomFont(Base):
+    __tablename__ = "custom_fonts"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    family_name = Column(String(100), nullable=False)
+    filename = Column(String(255), nullable=False)
+    file_path = Column(String(500), nullable=False)
+    file_size = Column(Integer, nullable=False, default=0)
+    is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
 
 
@@ -148,9 +194,18 @@ class Export(Base):
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    job_id = Column(String(36), ForeignKey("jobs.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     format = Column(String(50), nullable=False)  # MP4, SRT, VTT, ASS, JSON
+    status = Column(String(50), nullable=False, default="QUEUED")  # QUEUED, PROCESSING, COMPLETED, FAILED
     storage_key = Column(String(500), nullable=True)
+    file_size = Column(Integer, nullable=True)
+    filename = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+
+    project = relationship("Project", back_populates="exports")
+    job = relationship("Job", backref="export")
 
 
 class Template(Base):
@@ -183,7 +238,11 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
+    actor_id = Column(String(36), nullable=True)
+    actor_email = Column(String(255), nullable=True)
     action = Column(String(100), nullable=False)
+    target_type = Column(String(100), nullable=True)
+    target_id = Column(String(255), nullable=True)
     details = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
 

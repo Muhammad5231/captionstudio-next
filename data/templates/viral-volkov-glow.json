@@ -1,0 +1,52 @@
+{
+  "id": "viral-volkov-glow",
+  "name": "Volkov Violet",
+  "category": "VIRAL_BOLD",
+  "description": "Electric violet cyberpunk mood with glowing outline.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Trebuchet MS",
+    "fontSize": 44,
+    "fontWeight": "800",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#B026FF",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#1E0038",
+    "strokeWidth": 6.0,
+    "shadowColor": "rgba(176,38,255,0.7)",
+    "shadowBlur": 18.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 75.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 3,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "word-pop",
+      "durationMs": 115,
+      "scale": 1.18
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#2E1065",
+    "color": "#B026FF",
+    "borderColor": "#B026FF"
+  },
+  "tags": [
+    "volkov",
+    "violet",
+    "cyberpunk",
+    "glow"
+  ]
+}

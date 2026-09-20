@@ -1,0 +1,52 @@
+{
+  "id": "cinematic-letterbox-classic",
+  "name": "Cinema Letterbox Yellow",
+  "category": "CINEMATIC",
+  "description": "Authentic theatrical dialogue yellow subtitle with crisp black outline.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Arial",
+    "fontSize": 34,
+    "fontWeight": "600",
+    "fontStyle": "normal",
+    "textTransform": "none",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFEA31",
+    "highlightColor": "#FFEA31",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#000000",
+    "strokeWidth": 3.0,
+    "shadowColor": "rgba(0,0,0,0.8)",
+    "shadowBlur": 4.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 86.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 6,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "none",
+      "durationMs": 0,
+      "scale": 1.0
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#000000",
+    "color": "#FFEA31",
+    "borderColor": "#FFEA31"
+  },
+  "tags": [
+    "cinema",
+    "theatrical",
+    "yellow",
+    "classic"
+  ]
+}

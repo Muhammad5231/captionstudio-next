@@ -1,0 +1,51 @@
+{
+  "id": "kinetic-zoom-flash",
+  "name": "Zoom Flash",
+  "category": "KINETIC",
+  "description": "Energetic rapid zoom-in on stressed syllables.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Impact",
+    "fontSize": 46,
+    "fontWeight": "900",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#FFEA00",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#000000",
+    "strokeWidth": 7.0,
+    "shadowColor": "rgba(0,0,0,0.85)",
+    "shadowBlur": 10.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 74.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 3,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "zoom",
+      "durationMs": 130,
+      "scale": 1.3
+    },
+    "displayMode": "chunk"
+  },
+  "thumbnailCss": {
+    "background": "#172554",
+    "color": "#FFEA00",
+    "borderColor": "#FFEA00"
+  },
+  "tags": [
+    "zoom",
+    "flash",
+    "hype"
+  ]
+}

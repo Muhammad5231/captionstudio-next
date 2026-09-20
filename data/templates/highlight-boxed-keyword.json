@@ -1,0 +1,52 @@
+{
+  "id": "highlight-boxed-keyword",
+  "name": "Crimson Boxed Keyword",
+  "category": "HIGHLIGHT",
+  "description": "Surrounds the active spoken word with a solid high-visibility crimson badge.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Segoe UI",
+    "fontSize": 40,
+    "fontWeight": "800",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#FF0055",
+    "secondaryColor": "#FFFFFF",
+    "strokeColor": "#000000",
+    "strokeWidth": 5.0,
+    "shadowColor": "rgba(0,0,0,0.8)",
+    "shadowBlur": 8.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 77.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 3,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "word-pop",
+      "durationMs": 100,
+      "scale": 1.2
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#29000D",
+    "color": "#FF0055",
+    "borderColor": "#FF0055"
+  },
+  "tags": [
+    "boxed",
+    "badge",
+    "crimson",
+    "keyword"
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "id": "social-fitness-coach",
+  "name": "Fitness Energy Blast",
+  "category": "CREATOR_SOCIAL",
+  "description": "Athletic, high-intensity orange lettering inspiring movement.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Impact",
+    "fontSize": 48,
+    "fontWeight": "900",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#FF5400",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#000000",
+    "strokeWidth": 7.5,
+    "shadowColor": "rgba(0,0,0,0.9)",
+    "shadowBlur": 10.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 72.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 3,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "bounce",
+      "durationMs": 130,
+      "scale": 1.25
+    },
+    "displayMode": "chunk"
+  },
+  "thumbnailCss": {
+    "background": "#331100",
+    "color": "#FF5400",
+    "borderColor": "#FF5400"
+  },
+  "tags": [
+    "fitness",
+    "gym",
+    "athletic",
+    "energy"
+  ]
+}

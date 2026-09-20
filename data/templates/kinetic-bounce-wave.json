@@ -1,0 +1,51 @@
+{
+  "id": "kinetic-bounce-wave",
+  "name": "Bounce Wave",
+  "category": "KINETIC",
+  "description": "Springy bounce animation adding organic rhythm to spoken phrases.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Trebuchet MS",
+    "fontSize": 42,
+    "fontWeight": "800",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#00FFA3",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#002B1B",
+    "strokeWidth": 6.0,
+    "shadowColor": "rgba(0,0,0,0.8)",
+    "shadowBlur": 8.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 76.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 3,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "bounce",
+      "durationMs": 140,
+      "scale": 1.22
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#022C22",
+    "color": "#00FFA3",
+    "borderColor": "#00FFA3"
+  },
+  "tags": [
+    "bounce",
+    "spring",
+    "rhythm"
+  ]
+}

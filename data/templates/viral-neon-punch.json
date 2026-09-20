@@ -1,0 +1,53 @@
+{
+  "id": "viral-neon-punch",
+  "name": "Neon Toxic Punch",
+  "category": "VIRAL_BOLD",
+  "description": "Electrifying toxic green font with deep black drop shadow and elastic snap.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Impact",
+    "fontSize": 44,
+    "fontWeight": "900",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#39FF14",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#000000",
+    "strokeWidth": 7.0,
+    "shadowColor": "rgba(57,255,20,0.5)",
+    "shadowBlur": 16.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 75.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 3,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "elastic",
+      "durationMs": 130,
+      "scale": 1.2
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#052E16",
+    "color": "#39FF14",
+    "borderColor": "#39FF14"
+  },
+  "tags": [
+    "neon",
+    "toxic",
+    "green",
+    "punch",
+    "gamer"
+  ]
+}

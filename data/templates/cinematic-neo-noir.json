@@ -1,0 +1,52 @@
+{
+  "id": "cinematic-neo-noir",
+  "name": "Neo-Noir High Contrast",
+  "category": "CINEMATIC",
+  "description": "Extreme stark monochrome contrast across horizontal black bars.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Arial",
+    "fontSize": 36,
+    "fontWeight": "700",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#FFFFFF",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "transparent",
+    "strokeWidth": 0.0,
+    "shadowColor": "rgba(0, 0, 0, 0.8)",
+    "shadowBlur": 8.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "#000000",
+    "backgroundPaddingX": 20.0,
+    "backgroundPaddingY": 6.0,
+    "backgroundBorderRadius": 0.0,
+    "positionY": 85.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 5,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "none",
+      "durationMs": 0,
+      "scale": 1.0
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#000000",
+    "color": "#FFFFFF",
+    "borderColor": "#FFFFFF"
+  },
+  "tags": [
+    "neo-noir",
+    "monochrome",
+    "stark",
+    "contrast"
+  ]
+}

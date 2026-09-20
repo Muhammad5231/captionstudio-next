@@ -1,0 +1,52 @@
+{
+  "id": "highlight-glowing-word",
+  "name": "Cyan Glow Aura",
+  "category": "HIGHLIGHT",
+  "description": "Active words emit a luminous sci-fi cyan aura.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Trebuchet MS",
+    "fontSize": 42,
+    "fontWeight": "800",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#E0F2FE",
+    "highlightColor": "#00FFFF",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#002733",
+    "strokeWidth": 5.0,
+    "shadowColor": "rgba(0,255,255,0.8)",
+    "shadowBlur": 16.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 76.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 4,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "word-pop",
+      "durationMs": 110,
+      "scale": 1.15
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#002029",
+    "color": "#00FFFF",
+    "borderColor": "#00FFFF"
+  },
+  "tags": [
+    "cyan",
+    "glow",
+    "aura",
+    "sci-fi"
+  ]
+}

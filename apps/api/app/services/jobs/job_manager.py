@@ -11,6 +11,7 @@ from apps.api.app.database.models import (
     CaptionTrack,
     CaptionSegment,
     CaptionWord,
+    Export,
     utc_now,
 )
 from apps.api.app.services.storage.local_storage import storage_service
@@ -20,6 +21,8 @@ from apps.api.app.services.media.ffmpeg_service import ffmpeg_service
 from apps.api.app.services.transcription.transcription_service import transcription_service
 from apps.api.app.services.subtitles.subtitle_service import subtitle_service
 from apps.api.app.services.captions.grouping_service import caption_grouping_service
+from apps.api.app.services.rendering.export_service import export_service
+from apps.api.app.schemas.render_spec import CaptionRenderSpec
 from apps.api.app.schemas.job import JobProgressEvent
 from apps.api.app.core.logging import logger
 
@@ -117,10 +120,23 @@ class JobManager:
         pipeline_type: str,
         **kwargs,
     ):
-        task = asyncio.create_task(
-            self._run_pipeline(job_id, project_id, pipeline_type, **kwargs)
-        )
-        self._tasks[job_id] = task
+        try:
+            loop = asyncio.get_running_loop()
+            task = loop.create_task(
+                self._run_pipeline(job_id, project_id, pipeline_type, **kwargs)
+            )
+            self._tasks[job_id] = task
+        except RuntimeError:
+            import threading
+            def _run_threaded():
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                new_loop.run_until_complete(
+                    self._run_pipeline(job_id, project_id, pipeline_type, **kwargs)
+                )
+                new_loop.close()
+            t = threading.Thread(target=_run_threaded, daemon=True)
+            t.start()
 
     async def _run_pipeline(
         self,
@@ -137,6 +153,17 @@ class JobManager:
                 await self._process_subtitle_import(job_id, project_id, kwargs.get("subtitle_asset_id"), kwargs.get("chroma_color", "#00FF00"))
             elif pipeline_type == "VIDEO_WITH_SUBTITLE":
                 await self._process_video_with_subtitle(job_id, project_id, kwargs.get("video_asset_id"), kwargs.get("subtitle_asset_id"))
+            elif pipeline_type == "RENDER_EXPORT":
+                await self._process_render_export(
+                    job_id,
+                    project_id,
+                    export_id=kwargs.get("export_id"),
+                    format_type=kwargs.get("format_type", "MP4"),
+                    track_id=kwargs.get("track_id"),
+                    render_spec_dict=kwargs.get("render_spec_dict"),
+                    crf=kwargs.get("crf", 20),
+                    preset=kwargs.get("preset", "veryfast"),
+                )
             else:
                 raise ValueError(f"Unknown pipeline type: {pipeline_type}")
         except Exception as e:
@@ -458,6 +485,207 @@ class JobManager:
 
             await self.broadcast_progress(job_id, project_id, "COMPLETED", "COMPLETED", 100.0, "Video and external captions successfully synchronized.")
 
+        finally:
+            db.close()
+
+    async def _process_render_export(
+        self,
+        job_id: str,
+        project_id: str,
+        export_id: str,
+        format_type: str = "MP4",
+        track_id: Optional[str] = None,
+        render_spec_dict: Optional[dict] = None,
+        crf: int = 20,
+        preset: str = "veryfast",
+    ):
+        import json
+        from apps.api.app.core.config import settings
+
+        db: Session = SessionLocal()
+        export_rec = None
+        try:
+            export_rec = db.query(Export).filter(Export.id == export_id).first()
+            project = db.query(Project).filter(Project.id == project_id).first()
+            if not export_rec or not project:
+                raise ValueError("Export record or project not found.")
+
+            export_rec.status = "PROCESSING"
+            db.commit()
+
+            # Find Track
+            track_query = db.query(CaptionTrack).filter(CaptionTrack.project_id == project_id)
+            if track_id:
+                track = track_query.filter(CaptionTrack.id == track_id).first()
+            else:
+                track = track_query.filter(CaptionTrack.is_default == True).first() or track_query.first()
+
+            if not track:
+                raise ValueError("No caption track found for this project.")
+
+            # Load segments and words
+            segments = []
+            for seg in track.segments:
+                seg_dict = {
+                    "start_time": seg.start_time,
+                    "end_time": seg.end_time,
+                    "text": seg.text,
+                    "words": [
+                        {
+                            "word": w.word,
+                            "start_time": w.start_time,
+                            "end_time": w.end_time,
+                            "confidence": w.confidence,
+                        }
+                        for w in seg.words
+                    ],
+                }
+                segments.append(seg_dict)
+
+            # Determine Render Spec
+            if render_spec_dict:
+                spec = CaptionRenderSpec(**render_spec_dict)
+            elif track.style_spec:
+                try:
+                    spec = CaptionRenderSpec(**json.loads(track.style_spec))
+                except Exception:
+                    spec = CaptionRenderSpec()
+            else:
+                spec = CaptionRenderSpec()
+
+            clean_proj_name = "".join(c for c in project.name if c.isalnum() or c in ("-", "_")).strip() or "caption_export"
+            vw = project.width or 1920
+            vh = project.height or 1080
+
+            exports_dir = settings.storage_path / "exports"
+            exports_dir.mkdir(parents=True, exist_ok=True)
+
+            if format_type == "MP4":
+                video_asset = db.query(ProjectAsset).filter(
+                    ProjectAsset.project_id == project_id,
+                    ProjectAsset.type == "VIDEO"
+                ).first()
+                if not video_asset:
+                    raise ValueError("No video asset associated with this project for MP4 render.")
+
+                in_video_path = storage_service.resolve_key(video_asset.storage_key)
+                out_filename = f"{clean_proj_name}_{export_id[:8]}.mp4"
+                out_file_path = exports_dir / out_filename
+
+                await self.broadcast_progress(job_id, project_id, "PROCESSING", "BURNING_SUBTITLES", 10.0, "Starting FFmpeg subtitle burn-in...")
+
+                loop = asyncio.get_running_loop()
+                last_reported_pct = [10.0]
+
+                def on_render_progress(pct: float):
+                    scaled_pct = 10.0 + (pct * 0.85)  # 10% -> 95%
+                    if scaled_pct - last_reported_pct[0] >= 3.0 or scaled_pct >= 95.0:
+                        last_reported_pct[0] = scaled_pct
+                        asyncio.run_coroutine_threadsafe(
+                            self.broadcast_progress(
+                                job_id, project_id, "PROCESSING", "BURNING_SUBTITLES", scaled_pct,
+                                f"Rendering video frames ({round(pct)}%)..."
+                            ),
+                            loop
+                        )
+
+                await asyncio.to_thread(
+                    export_service.render_mp4,
+                    input_video_path=in_video_path,
+                    segments=segments,
+                    spec=spec,
+                    output_path=out_file_path,
+                    video_width=vw,
+                    video_height=vh,
+                    duration=project.duration,
+                    crf=crf,
+                    preset=preset,
+                    progress_callback=on_render_progress,
+                )
+
+                export_rec.storage_key = f"exports/{out_filename}"
+                export_rec.filename = out_filename
+                export_rec.file_size = out_file_path.stat().st_size
+                export_rec.status = "COMPLETED"
+                export_rec.completed_at = utc_now()
+                db.commit()
+
+            elif format_type == "SRT":
+                out_filename = f"{clean_proj_name}_{export_id[:8]}.srt"
+                out_file_path = exports_dir / out_filename
+                await asyncio.to_thread(export_service.export_srt, segments, out_file_path)
+                export_rec.storage_key = f"exports/{out_filename}"
+                export_rec.filename = out_filename
+                export_rec.file_size = out_file_path.stat().st_size
+                export_rec.status = "COMPLETED"
+                export_rec.completed_at = utc_now()
+                db.commit()
+
+            elif format_type == "VTT":
+                out_filename = f"{clean_proj_name}_{export_id[:8]}.vtt"
+                out_file_path = exports_dir / out_filename
+                await asyncio.to_thread(export_service.export_vtt, segments, out_file_path)
+                export_rec.storage_key = f"exports/{out_filename}"
+                export_rec.filename = out_filename
+                export_rec.file_size = out_file_path.stat().st_size
+                export_rec.status = "COMPLETED"
+                export_rec.completed_at = utc_now()
+                db.commit()
+
+            elif format_type == "ASS":
+                out_filename = f"{clean_proj_name}_{export_id[:8]}.ass"
+                out_file_path = exports_dir / out_filename
+                await asyncio.to_thread(
+                    export_service.export_ass,
+                    segments=segments,
+                    spec=spec,
+                    output_path=out_file_path,
+                    video_width=vw,
+                    video_height=vh,
+                )
+                export_rec.storage_key = f"exports/{out_filename}"
+                export_rec.filename = out_filename
+                export_rec.file_size = out_file_path.stat().st_size
+                export_rec.status = "COMPLETED"
+                export_rec.completed_at = utc_now()
+                db.commit()
+
+            elif format_type == "JSON":
+                out_filename = f"{clean_proj_name}_{export_id[:8]}.json"
+                out_file_path = exports_dir / out_filename
+                track_export_data = {
+                    "projectId": project.id,
+                    "projectName": project.name,
+                    "trackName": track.name,
+                    "language": track.language,
+                    "style": spec.model_dump(),
+                    "segments": segments,
+                }
+                await asyncio.to_thread(export_service.export_json, track_export_data, out_file_path)
+                export_rec.storage_key = f"exports/{out_filename}"
+                export_rec.filename = out_filename
+                export_rec.file_size = out_file_path.stat().st_size
+                export_rec.status = "COMPLETED"
+                export_rec.completed_at = utc_now()
+                db.commit()
+
+            else:
+                raise ValueError(f"Unsupported export format: {format_type}")
+
+            await self.broadcast_progress(
+                job_id, project_id, "COMPLETED", "COMPLETED", 100.0,
+                f"Export of {format_type} completed successfully."
+            )
+
+        except Exception as e:
+            logger.exception("Export pipeline failed: %s", e)
+            try:
+                if export_rec:
+                    export_rec.status = "FAILED"
+                    db.commit()
+            except Exception:
+                pass
+            raise
         finally:
             db.close()
 

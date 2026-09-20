@@ -25,6 +25,11 @@ class ProjectCreate(BaseModel):
     language: Optional[str] = "en"
 
 
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    status: Optional[str] = None
+
+
 class ProjectResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -32,6 +37,8 @@ class ProjectResponse(BaseModel):
     name: str
     status: str
     source_type: str
+    user_id: Optional[str] = None
+    deleted_at: Optional[datetime] = None
     duration: Optional[float] = None
     width: Optional[int] = None
     height: Optional[int] = None

@@ -24,6 +24,7 @@ export const CaptionSegmentEditor: React.FC<CaptionSegmentEditorProps> = ({
   const [editText, setEditText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const startEdit = (seg: CaptionSegmentData) => {
     setEditingId(seg.id);
@@ -40,18 +41,32 @@ export const CaptionSegmentEditor: React.FC<CaptionSegmentEditorProps> = ({
   const handleSaveAll = async () => {
     setIsSaving(true);
     setSaveSuccess(false);
+    setErrorMessage(null);
     try {
-      const payload = segments.map((s) => ({
+      const payload = segments.map((s, idx) => ({
+        segment_index: s.segment_index ?? idx,
         start_time: s.start_time,
         end_time: s.end_time,
         text: s.text,
+        words: s.words && s.words.length > 0
+          ? s.words.map((w, wIdx) => ({
+              word: w.word,
+              start_time: w.start_time,
+              end_time: w.end_time,
+              word_index: w.word_index ?? wIdx,
+              confidence: w.confidence,
+            }))
+          : undefined,
       }));
-      const updated = await updateCaptionTrack(projectId, captionTrack.id, payload);
+      const updated = await updateCaptionTrack(projectId, captionTrack.id, {
+        segments: payload,
+      });
       onTrackUpdated(updated);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Save failed:", e);
+      setErrorMessage(e.message || "Failed to save captions");
     } finally {
       setIsSaving(false);
     }
@@ -87,6 +102,12 @@ export const CaptionSegmentEditor: React.FC<CaptionSegmentEditorProps> = ({
           )}
         </Button>
       </div>
+
+      {errorMessage && (
+        <div className="mb-3 rounded-lg border border-red-800/60 bg-red-950/40 p-2.5 text-xs text-red-300">
+          {errorMessage}
+        </div>
+      )}
 
       {/* Segments List */}
       <div className="flex-1 space-y-2 overflow-y-auto pr-1">

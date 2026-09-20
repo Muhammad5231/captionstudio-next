@@ -1,0 +1,52 @@
+{
+  "id": "viral-alpha-impact",
+  "name": "Alpha Stomp",
+  "category": "VIRAL_BOLD",
+  "description": "Heavy stomping impact typeface with vivid hot magenta accent.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Impact",
+    "fontSize": 50,
+    "fontWeight": "900",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#FF0055",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#000000",
+    "strokeWidth": 8.0,
+    "shadowColor": "rgba(0,0,0,0.9)",
+    "shadowBlur": 10.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 70.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 2,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "word-pop",
+      "durationMs": 110,
+      "scale": 1.25
+    },
+    "displayMode": "chunk"
+  },
+  "thumbnailCss": {
+    "background": "#2E0214",
+    "color": "#FF0055",
+    "borderColor": "#FF0055"
+  },
+  "tags": [
+    "alpha",
+    "stomp",
+    "impact",
+    "magenta"
+  ]
+}

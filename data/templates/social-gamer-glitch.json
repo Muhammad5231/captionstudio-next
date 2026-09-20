@@ -1,0 +1,52 @@
+{
+  "id": "social-gamer-glitch",
+  "name": "Gamer Neon Grid",
+  "category": "CREATOR_SOCIAL",
+  "description": "High-adrenaline gamer stream aesthetics with electric violet and acid green.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Impact",
+    "fontSize": 46,
+    "fontWeight": "900",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#00FF66",
+    "secondaryColor": "#9900FF",
+    "strokeColor": "#1A0033",
+    "strokeWidth": 7.0,
+    "shadowColor": "rgba(0,255,102,0.6)",
+    "shadowBlur": 14.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 74.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 3,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "elastic",
+      "durationMs": 130,
+      "scale": 1.22
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#1A0033",
+    "color": "#00FF66",
+    "borderColor": "#00FF66"
+  },
+  "tags": [
+    "gamer",
+    "streamer",
+    "twitch",
+    "neon"
+  ]
+}

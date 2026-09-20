@@ -63,3 +63,6 @@ $RECYCLE.BIN/
 .coverage
 htmlcov/
 
+# TypeScript build info
+*.tsbuildinfo
+

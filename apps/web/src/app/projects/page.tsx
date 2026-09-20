@@ -156,10 +156,10 @@ export default function ProjectsPage() {
                       : "Recently"}
                   </span>
                   <Link
-                    href={`/create`}
-                    className="flex items-center gap-1 text-xs font-medium text-indigo-400 hover:text-indigo-300"
+                    href={`/editor/${proj.id}`}
+                    className="flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
                   >
-                    Open <ExternalLink className="h-3 w-3" />
+                    Open Editor <ExternalLink className="h-3 w-3" />
                   </Link>
                 </div>
               </div>

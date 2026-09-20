@@ -1,0 +1,52 @@
+{
+  "id": "cinematic-film-white",
+  "name": "35mm Film Print",
+  "category": "CINEMATIC",
+  "description": "Authentic photochemical 35mm film projected subtitle reproduction.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Georgia",
+    "fontSize": 34,
+    "fontWeight": "600",
+    "fontStyle": "normal",
+    "textTransform": "none",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#EDEDED",
+    "highlightColor": "#EDEDED",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#111111",
+    "strokeWidth": 2.5,
+    "shadowColor": "rgba(0,0,0,0.7)",
+    "shadowBlur": 4.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 85.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 6,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "none",
+      "durationMs": 0,
+      "scale": 1.0
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#121212",
+    "color": "#EDEDED",
+    "borderColor": "#525252"
+  },
+  "tags": [
+    "film",
+    "35mm",
+    "print",
+    "celluloid"
+  ]
+}

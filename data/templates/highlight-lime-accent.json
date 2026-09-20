@@ -1,0 +1,52 @@
+{
+  "id": "highlight-lime-accent",
+  "name": "Acid Lime Accent",
+  "category": "HIGHLIGHT",
+  "description": "Acid lime punchy active words on clean monochrome body.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Arial",
+    "fontSize": 44,
+    "fontWeight": "800",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#B8FF00",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#000000",
+    "strokeWidth": 6.0,
+    "shadowColor": "rgba(0,0,0,0.85)",
+    "shadowBlur": 8.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 76.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 3,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "word-pop",
+      "durationMs": 105,
+      "scale": 1.2
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#172100",
+    "color": "#B8FF00",
+    "borderColor": "#B8FF00"
+  },
+  "tags": [
+    "acid",
+    "lime",
+    "accent",
+    "bold"
+  ]
+}

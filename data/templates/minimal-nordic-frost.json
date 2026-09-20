@@ -1,0 +1,52 @@
+{
+  "id": "minimal-nordic-frost",
+  "name": "Nordic Frost",
+  "category": "MINIMAL",
+  "description": "Cool slate and ice tones with clean geometric proportions.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Segoe UI",
+    "fontSize": 32,
+    "fontWeight": "500",
+    "fontStyle": "normal",
+    "textTransform": "none",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#E0E7FF",
+    "highlightColor": "#C7D2FE",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#1E1B4B",
+    "strokeWidth": 2.0,
+    "shadowColor": "rgba(0,0,0,0.5)",
+    "shadowBlur": 6.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 83.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 5,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "none",
+      "durationMs": 0,
+      "scale": 1.0
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#1E1B4B",
+    "color": "#E0E7FF",
+    "borderColor": "#4338CA"
+  },
+  "tags": [
+    "nordic",
+    "frost",
+    "cool",
+    "clean"
+  ]
+}

@@ -105,6 +105,97 @@ class FFmpegService:
         self.run_command(args)
         return out_p
 
+    def burn_subtitles(
+        self,
+        input_video_path: Path | str,
+        ass_subtitle_path: Path | str,
+        output_video_path: Path | str,
+        fonts_dir: Optional[Path | str] = None,
+        duration: Optional[float] = None,
+        crf: int = 20,
+        preset: str = "veryfast",
+        progress_callback: Optional[object] = None,
+        timeout: int = 600,
+    ) -> Path:
+        """
+        Burns styled ASS subtitles directly into video frames with font resolution
+        and real-time progress callbacks.
+        """
+        import re
+
+        in_p = Path(input_video_path).resolve()
+        sub_p = Path(ass_subtitle_path).resolve()
+        out_p = Path(output_video_path).resolve()
+        out_p.parent.mkdir(parents=True, exist_ok=True)
+
+        if not in_p.is_file():
+            raise FileNotFoundError(f"Input video not found: {in_p}")
+        if not sub_p.is_file():
+            raise FileNotFoundError(f"ASS subtitle file not found: {sub_p}")
+
+        # Windows-safe path escaping for FFmpeg filtergraph (handles spaces, colons, backslashes)
+        def escape_path(p: Path) -> str:
+            s = str(p.resolve()).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
+            return f"'{s}'"
+
+        escaped_sub = escape_path(sub_p)
+        f_dir = Path(fonts_dir or settings.data_dir / "fonts").resolve()
+        escaped_fonts = escape_path(f_dir)
+
+        filter_arg = f"subtitles={escaped_sub}:fontsdir={escaped_fonts}"
+
+        args = [
+            "-i", str(in_p),
+            "-vf", filter_arg,
+            "-c:v", "libx264",
+            "-preset", preset,
+            "-crf", str(crf),
+            "-c:a", "copy",
+            str(out_p)
+        ]
+
+        full_cmd = [self.binary, "-y", "-hide_banner"] + args
+        logger.info("Executing burn_subtitles: %s", " ".join(full_cmd))
+
+        proc = subprocess.Popen(
+            full_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        time_regex = re.compile(r"time=(\d+):(\d+):(\d+\.\d+)")
+        total_duration = duration or 0.0
+
+        stderr_lines = []
+        if proc.stderr:
+            for line in iter(proc.stderr.readline, ""):
+                stderr_lines.append(line)
+                if progress_callback and callable(progress_callback) and total_duration > 0:
+                    match = time_regex.search(line)
+                    if match:
+                        h = int(match.group(1))
+                        m = int(match.group(2))
+                        s = float(match.group(3))
+                        current_sec = h * 3600 + m * 60 + s
+                        pct = min(99.0, max(0.0, (current_sec / total_duration) * 100.0))
+                        progress_callback(pct)
+
+        proc.wait(timeout=timeout)
+        if proc.returncode != 0:
+            err_msg = "".join(stderr_lines[-20:]) if stderr_lines else "Unknown FFmpeg error"
+            logger.error("FFmpeg subtitle burn-in failed: %s", err_msg)
+            raise RuntimeError(f"FFmpeg subtitle burn-in failed: {err_msg}")
+
+        if progress_callback and callable(progress_callback):
+            progress_callback(100.0)
+
+        if not out_p.is_file() or out_p.stat().st_size == 0:
+            raise RuntimeError("Rendered video file is missing or empty.")
+
+        return out_p
+
 
 ffmpeg_service = FFmpegService()
+
 

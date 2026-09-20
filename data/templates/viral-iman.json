@@ -1,0 +1,53 @@
+{
+  "id": "viral-iman",
+  "name": "Iman Luxury",
+  "category": "VIRAL_BOLD",
+  "description": "Polished high-end typography with rich metallic gold accent and swift zoom animation.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Arial",
+    "fontSize": 40,
+    "fontWeight": "800",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#FFD700",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#1A1A1A",
+    "strokeWidth": 4.0,
+    "shadowColor": "rgba(0,0,0,0.8)",
+    "shadowBlur": 8.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 78.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 4,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "zoom",
+      "durationMs": 120,
+      "scale": 1.15
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#18181B",
+    "color": "#FFD700",
+    "borderColor": "#FFD700"
+  },
+  "tags": [
+    "iman",
+    "luxury",
+    "gold",
+    "clean",
+    "aesthetic"
+  ]
+}

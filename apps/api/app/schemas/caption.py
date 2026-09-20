@@ -1,5 +1,7 @@
-from typing import List, Optional
-from pydantic import BaseModel, Field, ConfigDict
+import json
+from typing import List, Optional, Any
+from pydantic import BaseModel, Field, ConfigDict, model_validator
+from apps.api.app.schemas.render_spec import CaptionRenderSpec
 
 
 class CaptionWordBase(BaseModel):
@@ -10,7 +12,7 @@ class CaptionWordBase(BaseModel):
 
 
 class CaptionWordCreate(CaptionWordBase):
-    word_index: int
+    word_index: Optional[int] = 0
 
 
 class CaptionWordResponse(CaptionWordBase):
@@ -27,8 +29,8 @@ class CaptionSegmentBase(BaseModel):
 
 
 class CaptionSegmentCreate(CaptionSegmentBase):
-    segment_index: int
-    words: List[CaptionWordCreate] = []
+    segment_index: Optional[int] = 0
+    words: Optional[List[CaptionWordCreate]] = []
 
 
 class CaptionSegmentResponse(CaptionSegmentBase):
@@ -43,6 +45,7 @@ class CaptionTrackBase(BaseModel):
     name: str = "Default Track"
     language: str = "en"
     is_default: bool = True
+    style: Optional[CaptionRenderSpec] = None
 
 
 class CaptionTrackCreate(CaptionTrackBase):
@@ -54,6 +57,7 @@ class CaptionTrackUpdate(BaseModel):
     name: Optional[str] = None
     language: Optional[str] = None
     segments: Optional[List[CaptionSegmentCreate]] = None
+    style: Optional[CaptionRenderSpec] = None
 
 
 class CaptionTrackResponse(CaptionTrackBase):
@@ -62,5 +66,31 @@ class CaptionTrackResponse(CaptionTrackBase):
     id: str
     project_id: str
     segments: List[CaptionSegmentResponse] = []
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
+    created_at: Optional[Any] = None
+    updated_at: Optional[Any] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def extract_style_from_orm(cls, data: Any) -> Any:
+        if hasattr(data, "style_spec"):
+            style_raw = getattr(data, "style_spec")
+            if style_raw and isinstance(style_raw, str):
+                try:
+                    parsed = json.loads(style_raw)
+                    # Dynamically set style attribute if data is an object
+                    setattr(data, "style", parsed)
+                except Exception:
+                    pass
+            elif not hasattr(data, "style") or getattr(data, "style") is None:
+                setattr(data, "style", CaptionRenderSpec().model_dump())
+        elif isinstance(data, dict):
+            if "style_spec" in data and not data.get("style"):
+                spec = data.get("style_spec")
+                if isinstance(spec, str) and spec:
+                    try:
+                        data["style"] = json.loads(spec)
+                    except Exception:
+                        data["style"] = CaptionRenderSpec().model_dump()
+            elif not data.get("style"):
+                data["style"] = CaptionRenderSpec().model_dump()
+        return data

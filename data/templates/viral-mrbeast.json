@@ -1,0 +1,53 @@
+{
+  "id": "viral-mrbeast",
+  "name": "MrBeast Hype",
+  "category": "VIRAL_BOLD",
+  "description": "Massive display typography with vibrant cyan highlight, heavy outline, and bounce animation.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Impact",
+    "fontSize": 48,
+    "fontWeight": "900",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#00F0FF",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#000000",
+    "strokeWidth": 8.0,
+    "shadowColor": "rgba(0,0,0,0.95)",
+    "shadowBlur": 12.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 72.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 3,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "bounce",
+      "durationMs": 140,
+      "scale": 1.25
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#0F172A",
+    "color": "#00F0FF",
+    "borderColor": "#00F0FF"
+  },
+  "tags": [
+    "mrbeast",
+    "bold",
+    "cyan",
+    "outline",
+    "youtube"
+  ]
+}

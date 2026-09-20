@@ -1,0 +1,52 @@
+{
+  "id": "minimal-slate-subtitle",
+  "name": "Slate Pill Subtitle",
+  "category": "MINIMAL",
+  "description": "Translucent dark pill container guaranteeing maximum readability over any background.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Arial",
+    "fontSize": 32,
+    "fontWeight": "600",
+    "fontStyle": "normal",
+    "textTransform": "none",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#F1F5F9",
+    "highlightColor": "#F1F5F9",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "transparent",
+    "strokeWidth": 0.0,
+    "shadowColor": "transparent",
+    "shadowBlur": 0.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "rgba(15, 23, 42, 0.75)",
+    "backgroundPaddingX": 18.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 84.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 6,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "none",
+      "durationMs": 0,
+      "scale": 1.0
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "rgba(15, 23, 42, 0.8)",
+    "color": "#F1F5F9",
+    "borderColor": "#334155"
+  },
+  "tags": [
+    "slate",
+    "box",
+    "pill",
+    "readable"
+  ]
+}

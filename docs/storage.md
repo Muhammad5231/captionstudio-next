@@ -1,41 +1,21 @@
-# Local Storage Architecture & Security
+# CaptionStudio — Local Storage Layout
 
-## Storage Structure
-
-All application media and workspace data reside locally in the `storage/` directory:
+## Filesystem Directory Structure
+All user files and database records reside within the local `storage/` directory:
 
 ```
 storage/
-├── uploads/     # User uploads (videos, subtitle files)
-├── projects/    # Project-specific workspace metadata
-├── audio/       # Extracted 16kHz mono WAV audio tracks
-├── subtitles/   # Converted and imported subtitle files
-├── thumbnails/  # Generated video thumbnails (for project listing)
-├── renders/     # Chroma canvas videos and rendered previews
-├── exports/     # Exported subtitle and burned video assets
-├── temp/        # Temporary working files (automatically cleaned)
-└── logs/        # Application runtime log files
+├── captionstudio.db       # SQLite 3 ACID database
+├── uploads/               # Original uploaded video and audio media files
+├── audio/                 # Extracted 16kHz mono WAV waveforms for Whisper
+├── exports/               # Rendered MP4 videos and subtitle files (SRT, VTT, ASS)
+├── fonts/                 # Custom uploaded TrueType (.ttf) and OpenType (.otf) fonts
+├── temp/                  # Transient render chunks and FFmpeg intermediate files
+└── models/                # Downloaded faster-whisper model weights
 ```
 
----
-
-## Security & Path Defense
-
-1. **Opaque Keys**:
-   - Clients only receive identifiers such as `uploads/4a7f29c0_intro.mp4`.
-   - Raw disk paths (e.g. `C:\Users\username\...` or `D:\Projects\...`) are never sent in API responses.
-
-2. **Path Traversal Prevention**:
-   - Every key resolution passes through `StorageService.resolve_key()`.
-   - Relative parent segments (`..`) are rejected immediately.
-   - Target files are verified to remain strictly within `settings.storage_path`.
-
-3. **Multi-Level Media Validation**:
-   - **Level 1**: Extension whitelist.
-   - **Level 2**: MIME type whitelist.
-   - **Level 3**: Magic byte signature inspection (rejects `.exe`, `.zip` masquerading as `.mp4`).
-   - **Level 4**: FFprobe container and stream analysis.
-   - **Level 5**: File size boundary check (<= 500MB).
-   - **Level 6**: Duration check (<= 60 minutes).
-   - **Level 7**: Resolution check (<= 8K UHD).
-
+## Safe Cleanup Lifecycle
+- **Temp Cache**: Files in `storage/temp/` can be safely removed anytime via `/admin/storage`.
+- **Audio Waves**: `storage/audio/` contains cached WAV files extracted from uploaded videos. If deleted, the pipeline can regenerate them from the source video if re-transcription is requested.
+- **Exports**: Rendered outputs can be deleted per-file by creators or in bulk by administrators.
+- **Projects**: Soft-deleted projects can be purged or restored before permanent cleanup.

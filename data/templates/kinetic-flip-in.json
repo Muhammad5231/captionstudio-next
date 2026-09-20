@@ -1,0 +1,51 @@
+{
+  "id": "kinetic-flip-in",
+  "name": "Flip Perspective",
+  "category": "KINETIC",
+  "description": "3D perspective flip entry per word segment.",
+  "renderSpec": {
+    "version": 1,
+    "fontFamily": "Trebuchet MS",
+    "fontSize": 42,
+    "fontWeight": "800",
+    "fontStyle": "normal",
+    "textTransform": "uppercase",
+    "letterSpacing": 0.0,
+    "lineHeight": 1.2,
+    "textColor": "#FFFFFF",
+    "highlightColor": "#06D6A0",
+    "secondaryColor": "#00FF88",
+    "strokeColor": "#00241A",
+    "strokeWidth": 5.5,
+    "shadowColor": "rgba(0,0,0,0.85)",
+    "shadowBlur": 8.0,
+    "shadowOffsetX": 2.0,
+    "shadowOffsetY": 4.0,
+    "backgroundColor": "transparent",
+    "backgroundPaddingX": 16.0,
+    "backgroundPaddingY": 8.0,
+    "backgroundBorderRadius": 8.0,
+    "positionY": 76.0,
+    "positionX": 50.0,
+    "alignment": "center",
+    "maxWordsPerLine": 3,
+    "maxLines": 2,
+    "safeAreaMargin": 5.0,
+    "animation": {
+      "type": "word-pop",
+      "durationMs": 120,
+      "scale": 1.2
+    },
+    "displayMode": "segment"
+  },
+  "thumbnailCss": {
+    "background": "#02241C",
+    "color": "#06D6A0",
+    "borderColor": "#06D6A0"
+  },
+  "tags": [
+    "flip",
+    "perspective",
+    "3d"
+  ]
+}
