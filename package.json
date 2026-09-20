@@ -1,0 +1,25 @@
+{
+  "name": "captionstudio-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local-first professional caption generation engine",
+  "scripts": {
+    "dev": "pnpm --filter @captionstudio/web dev",
+    "dev:api": "python apps/api/run.py",
+    "build": "pnpm --filter @captionstudio/caption-schema build && pnpm --filter @captionstudio/web build",
+    "lint": "pnpm --filter @captionstudio/web lint",
+    "test": "python -m pytest tests/",
+    "check-env": "python scripts/check_env.py"
+  },
+  "packageManager": "pnpm@11.25.0",
+  "keywords": [
+    "captions",
+    "subtitles",
+    "whisper",
+    "local-first",
+    "ffmpeg",
+    "video-editor"
+  ],
+  "author": "CaptionStudio Team",
+  "license": "MIT"
+}

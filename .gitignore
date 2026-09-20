@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# SQLite & Storage data
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+data/database/*.db
+storage/uploads/*
+storage/audio/*
+storage/subtitles/*
+storage/thumbnails/*
+storage/renders/*
+storage/exports/*
+storage/temp/*
+storage/logs/*
+!storage/**/.gitkeep
+!data/**/.gitkeep
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Pytest & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
