@@ -67,3 +67,4 @@ async def stream_job_events(job_id: str, db: Session = Depends(get_db)):
             "X-Accel-Buffering": "no",
         },
     )
+

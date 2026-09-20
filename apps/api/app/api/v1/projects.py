@@ -71,3 +71,4 @@ def delete_project(project_id: str, db: Session = Depends(get_db)):
     db.commit()
     logger.info("Deleted project %s and its files", project_id)
     return None
+

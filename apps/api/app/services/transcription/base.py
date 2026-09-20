@@ -35,3 +35,4 @@ class TranscriptionProvider(ABC):
         Transcribes audio file to word and segment-level timestamped tokens.
         """
         pass
+

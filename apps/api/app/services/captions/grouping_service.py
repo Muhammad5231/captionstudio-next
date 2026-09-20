@@ -130,3 +130,4 @@ class CaptionGroupingService:
 
 
 caption_grouping_service = CaptionGroupingService()
+

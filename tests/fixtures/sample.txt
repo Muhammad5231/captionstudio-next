@@ -1,0 +1,4 @@
+This is a plain text transcript without timing timestamps.
+It contains spoken sentences that must be aligned against an audio or video track.
+Never generate fake timestamps for this content.
+

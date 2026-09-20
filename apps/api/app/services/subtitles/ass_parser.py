@@ -78,3 +78,4 @@ class ASSParser(BaseSubtitleParser):
             requires_alignment=False,
             segments=segments,
         )
+

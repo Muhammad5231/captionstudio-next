@@ -21,6 +21,7 @@ dist/
 *.db-wal
 *.db-shm
 data/database/*.db
+data/models/*
 storage/uploads/*
 storage/audio/*
 storage/subtitles/*
@@ -31,6 +32,11 @@ storage/temp/*
 storage/logs/*
 !storage/**/.gitkeep
 !data/**/.gitkeep
+
+# Local Binaries
+ffmpeg.exe
+ffprobe.exe
+*.exe
 
 # Environment
 .env
@@ -56,3 +62,4 @@ $RECYCLE.BIN/
 .pytest_cache/
 .coverage
 htmlcov/
+

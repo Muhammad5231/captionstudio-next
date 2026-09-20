@@ -21,3 +21,4 @@ class TXTParser(BaseSubtitleParser):
             raw_text=clean_text,
             warning="Plain text file has no timing data. Video alignment or transcription is required.",
         )
+

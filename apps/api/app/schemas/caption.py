@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class CaptionWordBase(BaseModel):
@@ -14,11 +14,10 @@ class CaptionWordCreate(CaptionWordBase):
 
 
 class CaptionWordResponse(CaptionWordBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     word_index: int
-
-    class Config:
-        from_attributes = True
 
 
 class CaptionSegmentBase(BaseModel):
@@ -33,12 +32,11 @@ class CaptionSegmentCreate(CaptionSegmentBase):
 
 
 class CaptionSegmentResponse(CaptionSegmentBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     segment_index: int
     words: List[CaptionWordResponse] = []
-
-    class Config:
-        from_attributes = True
 
 
 class CaptionTrackBase(BaseModel):
@@ -59,11 +57,10 @@ class CaptionTrackUpdate(BaseModel):
 
 
 class CaptionTrackResponse(CaptionTrackBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     project_id: str
     segments: List[CaptionSegmentResponse] = []
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
-
-    class Config:
-        from_attributes = True

@@ -54,3 +54,4 @@ def interpolate_word_timestamps(
         current_time = w_end
 
     return result
+

@@ -129,3 +129,4 @@ class FasterWhisperProvider(TranscriptionProvider):
 
 
 faster_whisper_provider = FasterWhisperProvider()
+

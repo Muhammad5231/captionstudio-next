@@ -18,3 +18,4 @@ api_v1_router.include_router(subtitles_router, tags=["Subtitles"])
 api_v1_router.include_router(jobs_router, tags=["Jobs"])
 api_v1_router.include_router(captions_router, tags=["Captions"])
 api_v1_router.include_router(assets_router, tags=["Assets"])
+

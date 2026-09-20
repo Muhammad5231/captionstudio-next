@@ -104,3 +104,4 @@ def root():
         "api_v1": "/api/v1",
         "docs": "/docs",
     }
+

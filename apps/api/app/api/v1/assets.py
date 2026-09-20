@@ -89,3 +89,4 @@ def stream_asset(asset_id: str, request: Request, db: Session = Depends(get_db))
         raise HTTPException(status_code=404, detail="File on disk not found")
 
     return send_bytes_range_requests(file_path, request, asset.mime_type or "video/mp4")
+

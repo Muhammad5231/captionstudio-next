@@ -37,3 +37,4 @@ def setup_logging():
 
 
 logger = logging.getLogger("CaptionStudio")
+

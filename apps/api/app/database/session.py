@@ -7,16 +7,17 @@ db_url = f"sqlite:///{db_path.as_posix()}"
 
 engine = create_engine(
     db_url,
-    connect_args={"check_same_thread": False},
+    connect_args={"check_same_thread": False, "timeout": 30},
     echo=False,
 )
 
 
-# Enable SQLite Foreign Keys and WAL (Write-Ahead Logging) mode for concurrent reads/writes
+# Enable SQLite Foreign Keys, WAL mode, and busy timeout for concurrent transactions
 @event.listens_for(engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA busy_timeout=30000")
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
 
@@ -38,3 +39,4 @@ def init_db():
     """Create all database tables."""
     from apps.api.app.database import models  # noqa: F401
     Base.metadata.create_all(bind=engine)
+

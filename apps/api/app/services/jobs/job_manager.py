@@ -342,6 +342,7 @@ class JobManager:
             project.duration = round(max_time + 1.0, 2)
             project.width = 1920
             project.height = 1080
+            db.commit()
 
             # Stage 3: Generate Chroma Background Video for Subtitle-Only Preview
             await self.broadcast_progress(job_id, project_id, "PROCESSING", "MEDIA_ANALYSIS", 80.0, "Creating chroma canvas preview video...")
@@ -462,3 +463,4 @@ class JobManager:
 
 
 job_manager = JobManager()
+

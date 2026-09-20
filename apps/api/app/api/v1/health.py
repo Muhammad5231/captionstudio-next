@@ -33,3 +33,4 @@ def health_check():
             "device": settings.WHISPER_DEVICE,
         }
     }
+

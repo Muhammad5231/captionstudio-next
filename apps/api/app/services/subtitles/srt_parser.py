@@ -74,3 +74,4 @@ class SRTParser(BaseSubtitleParser):
             requires_alignment=False,
             segments=segments,
         )
+

@@ -1,10 +1,12 @@
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from apps.api.app.schemas.caption import CaptionTrackResponse
 
 
 class AssetResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     project_id: str
     type: str
@@ -16,9 +18,6 @@ class AssetResponse(BaseModel):
     height: Optional[int] = None
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
-
 
 class ProjectCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
@@ -27,6 +26,8 @@ class ProjectCreate(BaseModel):
 
 
 class ProjectResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     name: str
     status: str
@@ -39,6 +40,3 @@ class ProjectResponse(BaseModel):
     updated_at: Optional[datetime] = None
     assets: List[AssetResponse] = []
     caption_tracks: List[CaptionTrackResponse] = []
-
-    class Config:
-        from_attributes = True

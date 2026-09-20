@@ -1,0 +1,17 @@
+{
+  "name": "@captionstudio/caption-schema",
+  "version": "1.0.0",
+  "description": "Canonical types and schemas for CaptionStudio captions, projects, and jobs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}
+
