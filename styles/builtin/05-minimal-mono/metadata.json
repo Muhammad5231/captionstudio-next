@@ -1,0 +1,19 @@
+{
+  "id": "minimal-mono",
+  "name": "Minimal Mono",
+  "category": "MINIMAL",
+  "description": "Crisp monospaced typography styled for developer, tech, and productivity creators.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["minimal", "monospace", "coding", "tech", "subtle"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "rgba(10, 15, 20, 0.95)",
+    "color": "#22C55E",
+    "fontFamily": "monospace",
+    "fontWeight": "600",
+    "border": "1px solid rgba(34, 197, 94, 0.3)",
+    "borderRadius": "4px",
+    "padding": "6px 12px"
+  }
+}

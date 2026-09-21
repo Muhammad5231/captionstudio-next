@@ -11,7 +11,7 @@ interface StylesGalleryProps {
 }
 
 const CATEGORIES: Array<{ key: string; label: string }> = [
-  { key: "ALL", label: "All (60)" },
+  { key: "ALL", label: "All (15)" },
   { key: "VIRAL_BOLD", label: "Viral / Bold" },
   { key: "MINIMAL", label: "Minimal" },
   { key: "KINETIC", label: "Kinetic" },
@@ -66,7 +66,7 @@ export const StylesGallery: React.FC<StylesGalleryProps> = ({
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search 60+ styles by name, effect, or creator..."
+          placeholder="Search 15 styles by name, effect, or creator..."
           className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2 pl-9 pr-3 text-xs text-white placeholder-zinc-500 focus:border-indigo-500 focus:outline-none transition-colors"
         />
       </div>

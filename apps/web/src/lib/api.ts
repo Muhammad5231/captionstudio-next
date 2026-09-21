@@ -119,7 +119,10 @@ export async function extractErrorMessage(res: Response, fallback: string): Prom
 
 export function getAuthHeaders(): Record<string, string> {
   if (typeof window === "undefined") return {};
-  const token = localStorage.getItem("captionstudio_session_token");
+  const token =
+    localStorage.getItem("captionstudio_admin_token") ||
+    localStorage.getItem("admin_token") ||
+    localStorage.getItem("captionstudio_session_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -288,23 +291,102 @@ export async function mergeCaptionSegments(
   return res.json();
 }
 
+export interface StyleSummary {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  status: string;
+  is_builtin: boolean;
+  current_version: number;
+  tags: string[];
+  thumbnail_css?: Record<string, string>;
+  render_spec?: CaptionRenderSpec;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface StyleVersionSummary {
+  version: number;
+  created_at?: string;
+  published_at?: string;
+  checksum?: string;
+}
+
+export interface StyleDetail {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  status: string;
+  is_builtin: boolean;
+  current_version: number;
+  python_code: string;
+  render_spec?: CaptionRenderSpec;
+  versions: StyleVersionSummary[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export async function listStyles(category?: string): Promise<StyleSummary[]> {
+  const params = new URLSearchParams();
+  if (category && category !== "ALL") params.append("category", category);
+  const res = await fetch(`${API_BASE}/styles?${params.toString()}`);
+  if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to load styles"));
+  return res.json();
+}
+
+export async function getStyle(id: string): Promise<StyleDetail> {
+  const res = await fetch(`${API_BASE}/styles/${id}`);
+  if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to load style"));
+  return res.json();
+}
+
+export async function previewStyle(
+  payload: { python_code?: string; sample_text?: string; video_width?: number; video_height?: number },
+  styleId?: string
+): Promise<{ success: boolean; error?: string; render_spec?: CaptionRenderSpec; sample_ass?: string; execution_time_ms: number }> {
+  const url = styleId ? `${API_BASE}/styles/${styleId}/preview` : `${API_BASE}/styles/preview`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to preview style"));
+  return res.json();
+}
+
 export async function listTemplates(
   category?: StyleCategory | string,
   search?: string
 ): Promise<StyleTemplate[]> {
-  const params = new URLSearchParams();
-  if (category && category !== "ALL") params.append("category", category);
-  if (search) params.append("search", search);
-
-  const res = await fetch(`${API_BASE}/templates?${params.toString()}`);
-  if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to load templates"));
-  return res.json();
+  const summaries = await listStyles(category);
+  const templates: StyleTemplate[] = summaries.map((s) => ({
+    id: s.id,
+    name: s.name,
+    category: s.category as any,
+    description: s.description,
+    renderSpec: (s.render_spec || {}) as any,
+    thumbnailCss: s.thumbnail_css,
+    tags: s.tags || [],
+  }));
+  if (search) {
+    const q = search.toLowerCase();
+    return templates.filter((t) => t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q));
+  }
+  return templates;
 }
 
 export async function getTemplate(id: string): Promise<StyleTemplate> {
-  const res = await fetch(`${API_BASE}/templates/${id}`);
-  if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to load template"));
-  return res.json();
+  const detail = await getStyle(id);
+  return {
+    id: detail.id,
+    name: detail.name,
+    category: detail.category as any,
+    description: detail.description,
+    renderSpec: detail.render_spec || ({} as any),
+    tags: [],
+  };
 }
 
 export async function listFonts(): Promise<FontInfo[]> {
@@ -782,3 +864,115 @@ export async function getAdminAuditLogs(): Promise<Array<{
   if (!res.ok) return [];
   return res.json();
 }
+
+// Phase 4B: Admin Auth & Style Studio APIs
+export async function adminLogin(password: string): Promise<{ token: string; expires_at: string }> {
+  const res = await fetch(`${API_BASE}/admin/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  if (!res.ok) throw new Error(await extractErrorMessage(res, "Admin authentication failed"));
+  const data = await res.json();
+  if (typeof window !== "undefined") {
+    localStorage.setItem("captionstudio_admin_token", data.token);
+  }
+  return data;
+}
+
+export async function adminLogout(): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/admin/auth/logout`, {
+      method: "POST",
+      headers: { ...getAuthHeaders() },
+    });
+  } finally {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("captionstudio_admin_token");
+      localStorage.removeItem("admin_token");
+    }
+  }
+}
+
+export async function adminGetMe(): Promise<{ authenticated: boolean; role: string; session_id: string; expires_at: string }> {
+  const res = await fetch(`${API_BASE}/admin/auth/me`, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error(await extractErrorMessage(res, "Not authenticated as administrator"));
+  return res.json();
+}
+
+export async function adminGetStyles(status?: string, category?: string): Promise<StyleSummary[]> {
+  const params = new URLSearchParams();
+  if (status && status !== "ALL") params.append("status", status);
+  if (category && category !== "ALL") params.append("category", category);
+  const res = await fetch(`${API_BASE}/admin/styles?${params.toString()}`, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to load admin styles"));
+  return res.json();
+}
+
+export async function adminGetStyle(id: string, version?: number): Promise<StyleDetail> {
+  const params = new URLSearchParams();
+  if (version !== undefined) params.append("version", String(version));
+  const res = await fetch(`${API_BASE}/admin/styles/${id}?${params.toString()}`, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to load style details"));
+  return res.json();
+}
+
+export async function adminValidateStyle(
+  pythonCode: string,
+  videoWidth: number = 1920,
+  videoHeight: number = 1080
+): Promise<{ is_valid: boolean; error?: string; render_spec?: any; execution_time_ms: number }> {
+  const res = await fetch(`${API_BASE}/admin/styles/validate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify({
+      python_code: pythonCode,
+      video_width: videoWidth,
+      video_height: videoHeight,
+    }),
+  });
+  if (!res.ok) throw new Error(await extractErrorMessage(res, "Style code validation request failed"));
+  return res.json();
+}
+
+export async function adminCreateStyle(payload: {
+  id: string;
+  name: string;
+  category: string;
+  description?: string;
+  python_code: string;
+}): Promise<StyleDetail> {
+  const res = await fetch(`${API_BASE}/admin/styles`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to create style"));
+  return res.json();
+}
+
+export async function adminUpdateStyle(
+  id: string,
+  payload: {
+    name?: string;
+    category?: string;
+    description?: string;
+    python_code?: string;
+    status?: string;
+  }
+): Promise<StyleDetail> {
+  const res = await fetch(`${API_BASE}/admin/styles/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to update style"));
+  return res.json();
+}
+

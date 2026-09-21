@@ -1,0 +1,20 @@
+{
+  "id": "word-focus",
+  "name": "Word Focus",
+  "category": "KINETIC",
+  "description": "Laser-targeted single-word rapid serial display in the visual focal center.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["kinetic", "one-word", "rapid", "focus", "shorts", "attention"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "#0F172A",
+    "color": "#00FF66",
+    "fontFamily": "Montserrat, sans-serif",
+    "fontWeight": "900",
+    "textTransform": "uppercase",
+    "border": "2px solid #00FF66",
+    "borderRadius": "6px",
+    "padding": "6px 12px"
+  }
+}

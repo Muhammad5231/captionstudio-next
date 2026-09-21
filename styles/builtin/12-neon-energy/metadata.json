@@ -1,0 +1,21 @@
+{
+  "id": "neon-energy",
+  "name": "Neon Energy",
+  "category": "VIRAL_BOLD",
+  "description": "Cyberpunk synthwave glow text with intense cyan luminescence and hot magenta accents.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["neon", "glow", "cyberpunk", "gaming", "synthwave", "bold"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "#050510",
+    "color": "#00FFFF",
+    "fontFamily": "Montserrat, sans-serif",
+    "fontWeight": "900",
+    "textTransform": "uppercase",
+    "textShadow": "0 0 10px #00FFFF, 0 0 20px #00FFFF",
+    "border": "1px solid #00FFFF",
+    "borderRadius": "4px",
+    "padding": "6px 12px"
+  }
+}

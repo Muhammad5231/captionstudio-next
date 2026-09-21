@@ -1,0 +1,19 @@
+{
+  "id": "podcast-pro",
+  "name": "Podcast Pro",
+  "category": "CREATOR_SOCIAL",
+  "description": "Broadcast-ready podcast layout with balanced two-line readability and studio cyan accents.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["podcast", "interview", "conversation", "studio", "clean"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "#0F172A",
+    "color": "#FFFFFF",
+    "fontFamily": "Inter, sans-serif",
+    "fontWeight": "700",
+    "borderLeft": "4px solid #06B6D4",
+    "borderRadius": "4px",
+    "padding": "6px 12px"
+  }
+}

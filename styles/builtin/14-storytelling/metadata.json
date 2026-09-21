@@ -1,0 +1,18 @@
+{
+  "id": "storytelling",
+  "name": "Storytelling",
+  "category": "CREATOR_SOCIAL",
+  "description": "Narrative-paced warm serif typography with amber highlights inside a soft focus container.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["storytelling", "narrative", "essay", "warm", "amber", "vlog"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "rgba(15, 23, 42, 0.8)",
+    "color": "#FBBF24",
+    "fontFamily": "Georgia, serif",
+    "fontWeight": "600",
+    "borderRadius": "8px",
+    "padding": "6px 12px"
+  }
+}

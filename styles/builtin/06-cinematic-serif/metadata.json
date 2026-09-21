@@ -1,0 +1,20 @@
+{
+  "id": "cinematic-serif",
+  "name": "Cinematic Serif",
+  "category": "CINEMATIC",
+  "description": "Letterbox-safe classic cinematic serif subtitles with warm ivory and muted gold accents.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["cinematic", "serif", "film", "movie", "documentary", "elegant"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "#0C0A09",
+    "color": "#FDF6E2",
+    "fontFamily": "Georgia, serif",
+    "fontStyle": "italic",
+    "fontWeight": "700",
+    "border": "1px solid #D4AF37",
+    "borderRadius": "4px",
+    "padding": "6px 12px"
+  }
+}

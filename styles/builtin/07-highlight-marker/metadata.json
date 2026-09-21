@@ -1,0 +1,19 @@
+{
+  "id": "highlight-marker",
+  "name": "Highlight Marker",
+  "category": "HIGHLIGHT",
+  "description": "Fluorescent neon marker backing bar that highlights high-retention keywords.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["highlight", "marker", "fluorescent", "youtube", "social"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "#CCFF00",
+    "color": "#0F172A",
+    "fontFamily": "Montserrat, sans-serif",
+    "fontWeight": "800",
+    "textTransform": "uppercase",
+    "borderRadius": "4px",
+    "padding": "6px 12px"
+  }
+}

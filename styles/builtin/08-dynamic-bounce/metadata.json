@@ -1,0 +1,20 @@
+{
+  "id": "dynamic-bounce",
+  "name": "Dynamic Bounce",
+  "category": "KINETIC",
+  "description": "Bouncy animated text with warm citrus accent colors and lively momentum.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["kinetic", "bounce", "fun", "social", "orange", "reels"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "#1E1E2E",
+    "color": "#FF9900",
+    "fontFamily": "Montserrat, sans-serif",
+    "fontWeight": "800",
+    "textTransform": "uppercase",
+    "border": "2px solid #FF9900",
+    "borderRadius": "6px",
+    "padding": "6px 12px"
+  }
+}

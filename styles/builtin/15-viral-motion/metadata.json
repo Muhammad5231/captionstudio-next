@@ -1,0 +1,20 @@
+{
+  "id": "viral-motion",
+  "name": "Viral Motion",
+  "category": "VIRAL_BOLD",
+  "description": "Ultra-punchy TikTok and Shorts viral style with neon lime active text and massive stroke impact.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["viral", "tiktok", "shorts", "lime", "high-energy", "retention"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "#000000",
+    "color": "#CCFF00",
+    "fontFamily": "Montserrat, sans-serif",
+    "fontWeight": "900",
+    "textTransform": "uppercase",
+    "border": "2px solid #CCFF00",
+    "borderRadius": "4px",
+    "padding": "6px 12px"
+  }
+}

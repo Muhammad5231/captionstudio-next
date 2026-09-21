@@ -1,0 +1,21 @@
+{
+  "id": "kinetic-punch"
+,
+  "name": "Kinetic Punch",
+  "category": "KINETIC",
+  "description": "High-octane elastic animation with hot-pink accents and explosive transitions.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["kinetic", "elastic", "pink", "punch", "energy", "fitness"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "#18181B",
+    "color": "#FF0055",
+    "fontFamily": "Montserrat, sans-serif",
+    "fontWeight": "900",
+    "textTransform": "uppercase",
+    "border": "2px solid #FF0055",
+    "borderRadius": "4px",
+    "padding": "6px 12px"
+  }
+}

@@ -3,25 +3,20 @@ import sys
 import shutil
 import uuid
 import re
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
 import fastapi
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import text
 
 from apps.api.app.database.session import get_db
-from apps.api.app.database.models import User, Project, Job, Export, ProjectAsset, AuditLog
-from apps.api.app.api.deps import get_current_admin
+from apps.api.app.database.models import AdminSession, Project, Job, Export, ProjectAsset, AuditLog, CaptionStyle
+from apps.api.app.api.deps import require_admin
 from apps.api.app.core.config import settings
-from apps.api.app.services.media.ffmpeg_service import ffmpeg_service
-from apps.api.app.services.jobs.job_manager import job_manager
 from apps.api.app.schemas.admin import (
     AdminOverviewMetrics,
-    AdminUserListItem,
-    AdminUserRoleUpdate,
-    AdminUserStatusUpdate,
     StorageCleanupResult,
     SystemDiagnosticsResponse,
     AuditLogResponse,
@@ -47,15 +42,14 @@ def get_dir_size(path: Path) -> int:
 
 @router.get("/overview", response_model=AdminOverviewMetrics)
 def get_admin_overview(
-    admin: User = Depends(get_current_admin),
+    session: AdminSession = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    total_users = db.query(User).count()
-    active_users = db.query(User).filter(User.is_active == True).count()
-    total_projects = db.query(Project).count()
+    total_projects = db.query(Project).filter(Project.deleted_at.is_(None)).count()
     total_exports = db.query(Export).count()
     total_jobs = db.query(Job).count()
     failed_jobs = db.query(Job).filter(Job.status == "FAILED").count()
+    total_styles = db.query(CaptionStyle).count()
 
     storage_root = settings.storage_root
     uploads_size = get_dir_size(storage_root / "uploads")
@@ -68,12 +62,11 @@ def get_admin_overview(
     total_storage_mb = round(total_storage_bytes / (1024 * 1024), 2)
 
     return AdminOverviewMetrics(
-        total_users=total_users,
-        active_users=active_users,
         total_projects=total_projects,
         total_exports=total_exports,
         total_jobs=total_jobs,
         failed_jobs=failed_jobs,
+        total_styles=total_styles,
         storage_used_bytes=total_storage_bytes,
         storage_used_mb=total_storage_mb,
         storage_breakdown={
@@ -86,136 +79,12 @@ def get_admin_overview(
     )
 
 
-@router.get("/users", response_model=List[AdminUserListItem])
-def list_admin_users(
-    skip: int = 0,
-    limit: int = 50,
-    search: Optional[str] = None,
-    admin: User = Depends(get_current_admin),
-    db: Session = Depends(get_db),
-):
-    query = db.query(User)
-    if search:
-        s = f"%{search.strip().lower()}%"
-        query = query.filter((User.name.ilike(s)) | (User.email.ilike(s)))
-
-    users = query.order_by(User.created_at.desc()).offset(skip).limit(limit).all()
-
-    items = []
-    for u in users:
-        proj_count = db.query(Project).filter(Project.user_id == u.id).count()
-        exp_count = db.query(Export).filter(Export.user_id == u.id).count()
-        item = AdminUserListItem(
-            id=u.id,
-            name=u.name,
-            email=u.email,
-            role=u.role,
-            is_active=u.is_active,
-            created_at=u.created_at,
-            last_active_at=u.last_active_at,
-            project_count=proj_count,
-            export_count=exp_count,
-        )
-        items.append(item)
-    return items
-
-
-@router.patch("/users/{user_id}/role", response_model=AdminUserListItem)
-def change_user_role(
-    user_id: str,
-    payload: AdminUserRoleUpdate,
-    admin: User = Depends(get_current_admin),
-    db: Session = Depends(get_db),
-):
-    target_user = db.query(User).filter(User.id == user_id).first()
-    if not target_user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if target_user.role == "SUPER_ADMIN" and admin.id != target_user.id:
-        raise HTTPException(status_code=403, detail="Cannot alter role of SUPER_ADMIN")
-
-    old_role = target_user.role
-    target_user.role = payload.role
-    db.add(
-        AuditLog(
-            id=str(uuid.uuid4()),
-            actor_id=admin.id,
-            actor_email=admin.email,
-            action="CHANGE_USER_ROLE",
-            target_type="USER",
-            target_id=target_user.id,
-            details=f"Changed role from {old_role} to {payload.role} for {target_user.email}",
-        )
-    )
-    db.commit()
-    db.refresh(target_user)
-
-    proj_count = db.query(Project).filter(Project.user_id == target_user.id).count()
-    exp_count = db.query(Export).filter(Export.user_id == target_user.id).count()
-    return AdminUserListItem(
-        id=target_user.id,
-        name=target_user.name,
-        email=target_user.email,
-        role=target_user.role,
-        is_active=target_user.is_active,
-        created_at=target_user.created_at,
-        last_active_at=target_user.last_active_at,
-        project_count=proj_count,
-        export_count=exp_count,
-    )
-
-
-@router.patch("/users/{user_id}/status", response_model=AdminUserListItem)
-def change_user_status(
-    user_id: str,
-    payload: AdminUserStatusUpdate,
-    admin: User = Depends(get_current_admin),
-    db: Session = Depends(get_db),
-):
-    target_user = db.query(User).filter(User.id == user_id).first()
-    if not target_user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if target_user.id == admin.id:
-        raise HTTPException(status_code=400, detail="Cannot deactivate your own account")
-
-    target_user.is_active = payload.is_active
-    action_text = "ENABLED" if payload.is_active else "DISABLED"
-    db.add(
-        AuditLog(
-            id=str(uuid.uuid4()),
-            actor_id=admin.id,
-            actor_email=admin.email,
-            action=f"USER_{action_text}",
-            target_type="USER",
-            target_id=target_user.id,
-            details=f"Account status set to {action_text} for {target_user.email}",
-        )
-    )
-    db.commit()
-    db.refresh(target_user)
-
-    proj_count = db.query(Project).filter(Project.user_id == target_user.id).count()
-    exp_count = db.query(Export).filter(Export.user_id == target_user.id).count()
-    return AdminUserListItem(
-        id=target_user.id,
-        name=target_user.name,
-        email=target_user.email,
-        role=target_user.role,
-        is_active=target_user.is_active,
-        created_at=target_user.created_at,
-        last_active_at=target_user.last_active_at,
-        project_count=proj_count,
-        export_count=exp_count,
-    )
-
-
 @router.get("/jobs")
 def list_admin_jobs(
     status_filter: Optional[str] = Query(None, alias="status"),
     skip: int = 0,
     limit: int = 50,
-    admin: User = Depends(get_current_admin),
+    session: AdminSession = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     query = db.query(Job)
@@ -248,7 +117,7 @@ def list_admin_jobs(
 @router.post("/jobs/{job_id}/cancel")
 def cancel_admin_job(
     job_id: str,
-    admin: User = Depends(get_current_admin),
+    session: AdminSession = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     job = db.query(Job).filter(Job.id == job_id).first()
@@ -265,8 +134,7 @@ def cancel_admin_job(
     db.add(
         AuditLog(
             id=str(uuid.uuid4()),
-            actor_id=admin.id,
-            actor_email=admin.email,
+            actor="admin",
             action="CANCEL_JOB",
             target_type="JOB",
             target_id=job.id,
@@ -279,7 +147,7 @@ def cancel_admin_job(
 
 @router.get("/storage")
 def get_storage_stats(
-    admin: User = Depends(get_current_admin),
+    session: AdminSession = Depends(require_admin),
 ):
     storage_root = settings.storage_root
     categories = ["uploads", "renders", "exports", "fonts", "temp"]
@@ -311,7 +179,7 @@ def get_storage_stats(
 
 @router.post("/storage/clean", response_model=StorageCleanupResult)
 def clean_storage(
-    admin: User = Depends(get_current_admin),
+    session: AdminSession = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """
@@ -341,8 +209,7 @@ def clean_storage(
     db.add(
         AuditLog(
             id=str(uuid.uuid4()),
-            actor_id=admin.id,
-            actor_email=admin.email,
+            actor="admin",
             action="STORAGE_CLEANUP",
             target_type="STORAGE",
             target_id="temp",
@@ -361,13 +228,13 @@ def clean_storage(
 
 @router.get("/system", response_model=SystemDiagnosticsResponse)
 def get_system_diagnostics(
-    admin: User = Depends(get_current_admin),
+    session: AdminSession = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     # Test SQLite connection
     db_status = "Available"
     try:
-        db.execute(func.now())
+        db.execute(text("SELECT 1"))
     except Exception:
         db_status = "Error"
 
@@ -413,7 +280,7 @@ def get_admin_logs(
     level: Optional[str] = None,
     search: Optional[str] = None,
     limit: int = 100,
-    admin: User = Depends(get_current_admin),
+    session: AdminSession = Depends(require_admin),
 ):
     log_file = settings.storage_root / "logs" / "captionstudio.log"
     if not log_file.exists():
@@ -440,7 +307,6 @@ def get_admin_logs(
                 if len(entries) >= limit:
                     break
             else:
-                # Unstructured or traceback line
                 if not level or level.upper() in ["ERROR", "WARNING"]:
                     if not search or search.lower() in line_str.lower():
                         entries.append(
@@ -462,7 +328,7 @@ def get_admin_logs(
 def get_audit_logs(
     skip: int = 0,
     limit: int = 50,
-    admin: User = Depends(get_current_admin),
+    session: AdminSession = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     logs = db.query(AuditLog).order_by(AuditLog.created_at.desc()).offset(skip).limit(limit).all()

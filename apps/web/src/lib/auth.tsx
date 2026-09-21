@@ -1,16 +1,15 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { API_BASE, extractErrorMessage } from "@/lib/api";
+import { adminLogin, adminLogout, adminGetMe } from "@/lib/api";
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: "USER" | "ADMIN" | "SUPER_ADMIN" | string;
+  role: "ADMIN" | string;
   is_active: boolean;
   created_at?: string;
-  last_active_at?: string;
 }
 
 interface AuthContextType {
@@ -18,8 +17,7 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   loading: boolean;
-  login: (email: string, pass: string) => Promise<void>;
-  signup: (name: string, email: string, pass: string) => Promise<void>;
+  login: (password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   isAdmin: boolean;
@@ -27,21 +25,23 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const TOKEN_KEY = "captionstudio_session_token";
+const ADMIN_TOKEN_KEY = "captionstudio_admin_token";
 
 export function getClientToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_KEY);
+  return localStorage.getItem(ADMIN_TOKEN_KEY) || localStorage.getItem("admin_token");
 }
 
 export function setClientToken(token: string | null): void {
   if (typeof window === "undefined") return;
   if (token) {
-    localStorage.setItem(TOKEN_KEY, token);
-    document.cookie = `session_id=${token}; path=/; max-age=${30 * 86400}; SameSite=Lax`;
+    localStorage.setItem(ADMIN_TOKEN_KEY, token);
+    localStorage.setItem("admin_token", token);
+    document.cookie = `captionstudio_admin_token=${token}; path=/; max-age=${30 * 86400}; SameSite=Lax`;
   } else {
-    localStorage.removeItem(TOKEN_KEY);
-    document.cookie = "session_id=; path=/; max-age=0";
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    localStorage.removeItem("admin_token");
+    document.cookie = "captionstudio_admin_token=; path=/; max-age=0";
   }
 }
 
@@ -60,15 +60,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      const res = await fetch(`${API_BASE}/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${savedToken}`,
-        },
-      });
-
-      if (res.ok) {
-        const userData: User = await res.json();
-        setUser(userData);
+      const data = await adminGetMe();
+      if (data.authenticated) {
+        setUser({
+          id: data.session_id,
+          name: "Administrator",
+          email: "admin@captionstudio.local",
+          role: "ADMIN",
+          is_active: true,
+        });
         setToken(savedToken);
       } else {
         setClientToken(null);
@@ -76,7 +76,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setToken(null);
       }
     } catch {
-      // offline or server starting
+      setClientToken(null);
+      setUser(null);
+      setToken(null);
     } finally {
       setIsLoading(false);
     }
@@ -86,45 +88,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshUser();
   }, [refreshUser]);
 
-  const login = async (email: string, pass: string) => {
+  const login = async (password: string) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password: pass }),
+      const res = await adminLogin(password);
+      setClientToken(res.token);
+      setToken(res.token);
+      setUser({
+        id: "admin-session",
+        name: "Administrator",
+        email: "admin@captionstudio.local",
+        role: "ADMIN",
+        is_active: true,
       });
-
-      if (!res.ok) {
-        throw new Error(await extractErrorMessage(res, "Login failed"));
-      }
-
-      const data = await res.json();
-      setClientToken(data.token);
-      setToken(data.token);
-      setUser(data.user);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const signup = async (name: string, email: string, pass: string) => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/auth/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password: pass }),
-      });
-
-      if (!res.ok) {
-        throw new Error(await extractErrorMessage(res, "Sign up failed"));
-      }
-
-      const data = await res.json();
-      setClientToken(data.token);
-      setToken(data.token);
-      setUser(data.user);
     } finally {
       setIsLoading(false);
     }
@@ -132,13 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      const currentToken = getClientToken();
-      if (currentToken) {
-        await fetch(`${API_BASE}/auth/logout`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${currentToken}` },
-        });
-      }
+      await adminLogout();
     } catch {
       // ignore
     } finally {
@@ -148,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+  const isAdmin = user?.role === "ADMIN";
 
   return (
     <AuthContext.Provider
@@ -158,7 +128,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         loading: isLoading,
         login,
-        signup,
         logout,
         refreshUser,
         isAdmin,

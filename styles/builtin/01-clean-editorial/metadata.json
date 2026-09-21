@@ -1,0 +1,18 @@
+{
+  "id": "clean-editorial",
+  "name": "Clean Editorial",
+  "category": "MINIMAL",
+  "description": "Understated elegant sans-serif on a subtle dark slate rounded background pill.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["minimal", "editorial", "clean", "subtitles", "corporate"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "rgba(15, 23, 42, 0.85)",
+    "color": "#F8FAFC",
+    "fontFamily": "Montserrat, sans-serif",
+    "fontWeight": "600",
+    "borderRadius": "8px",
+    "padding": "6px 12px"
+  }
+}

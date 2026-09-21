@@ -1,3 +1,11 @@
+import sys
+from pathlib import Path
+
+# Ensure repository root is on sys.path so 'apps.api.app.*' imports work from any cwd
+_repo_root = str(Path(__file__).resolve().parents[3])
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -57,7 +65,6 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
         }
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": error_payload},
         content={"error": error_payload, "detail": str(exc.detail)},
     )
 

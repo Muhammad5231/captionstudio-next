@@ -1,0 +1,20 @@
+{
+  "id": "documentary",
+  "name": "Documentary",
+  "category": "CINEMATIC",
+  "description": "Non-intrusive broadcast subtitle standard with crisp outline and bottom third alignment.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["documentary", "film", "cinema", "subtitles", "standard", "broadcast"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "transparent",
+    "color": "#FFFFFF",
+    "fontFamily": "Inter, sans-serif",
+    "fontWeight": "600",
+    "textShadow": "0 2px 4px #000000",
+    "border": "1px solid rgba(255, 255, 255, 0.2)",
+    "borderRadius": "4px",
+    "padding": "6px 12px"
+  }
+}

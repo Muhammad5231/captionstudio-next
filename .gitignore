@@ -22,6 +22,8 @@ dist/
 *.db-shm
 data/database/*.db
 data/models/*
+apps/api/data/*
+**/data/models/**
 storage/uploads/*
 storage/audio/*
 storage/subtitles/*

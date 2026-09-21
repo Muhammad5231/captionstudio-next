@@ -1,0 +1,20 @@
+{
+  "id": "bold-impact",
+  "name": "Bold Impact",
+  "category": "VIRAL_BOLD",
+  "description": "Ultra-bold viral headline typography with thick black stroke and dynamic word popping.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["viral", "impact", "youtube", "tiktok", "reels", "bold"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "#000000",
+    "color": "#FFE600",
+    "fontFamily": "Impact, sans-serif",
+    "fontWeight": "900",
+    "textTransform": "uppercase",
+    "border": "2px solid #FFE600",
+    "borderRadius": "4px",
+    "padding": "6px 12px"
+  }
+}

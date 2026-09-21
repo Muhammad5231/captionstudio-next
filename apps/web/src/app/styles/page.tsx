@@ -72,13 +72,13 @@ export default function StylesPage() {
       {/* Header */}
       <div className="max-w-4xl mx-auto text-center mb-12">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-semibold uppercase tracking-wider mb-4">
-          <Sparkles className="w-3.5 h-3.5" /> 60+ Built-in Typography Presets
+          <Sparkles className="w-3.5 h-3.5" /> 15 Built-in Python Styles
         </div>
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
           Caption Style Library
         </h1>
         <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
-          Explore our handcrafted library of viral caption styles calibrated for TikTok, Reels, Shorts, and long-form cinema.
+          Explore our handcrafted library of 15 premium Python styles running securely in sandboxed isolation, calibrated for TikTok, Reels, Shorts, and long-form cinema.
         </p>
       </div>
 

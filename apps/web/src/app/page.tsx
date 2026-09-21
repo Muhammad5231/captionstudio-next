@@ -126,7 +126,7 @@ export default function HomePage() {
 
           <p className="mt-6 text-base sm:text-lg text-zinc-300 leading-relaxed max-w-2xl mx-auto">
             Generate accurate word-timed captions locally with AI. Customize typography,
-            animations, and 60+ viral styles. Export high-bitrate video with strict visual parity.
+            animations, and 15 premium Python styles. Export high-bitrate video with strict visual parity.
           </p>
 
           {/* Primary CTAs */}
@@ -141,7 +141,7 @@ export default function HomePage() {
             <Link href="/styles">
               <Button variant="outline" size="lg" className="gap-2 text-sm">
                 <Palette className="h-4 w-4 text-zinc-400" />
-                Explore 60+ Styles
+                Explore 15 Styles
               </Button>
             </Link>
           </div>
@@ -223,7 +223,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-base font-bold text-white mb-2">Style &amp; FFmpeg Render</h3>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Choose from 60+ templates, adjust animations, fonts, and safe zones. Render directly
+                Choose from 15 Python styles, adjust animations, fonts, and safe zones. Render directly
                 with hardware-accelerated FFmpeg burn-in at 100% visual parity.
               </p>
             </div>
@@ -239,7 +239,7 @@ export default function HomePage() {
               <h2 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">
                 Preset Library
               </h2>
-              <p className="mt-2 text-3xl font-extrabold text-white">60+ Production-Ready Styles</p>
+              <p className="mt-2 text-3xl font-extrabold text-white">15 Python-Powered Styles</p>
               <p className="mt-2 text-sm text-zinc-400">
                 Data-driven style templates engineered across six creator categories.
               </p>
@@ -428,9 +428,9 @@ export default function HomePage() {
                 Launch Caption Studio Free
               </Button>
             </Link>
-            <Link href="/dashboard">
+            <Link href="/styles">
               <Button variant="outline" size="lg" className="text-sm">
-                Open Dashboard
+                Explore 15 Styles
               </Button>
             </Link>
           </div>

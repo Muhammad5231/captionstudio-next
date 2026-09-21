@@ -1,0 +1,18 @@
+{
+  "id": "premium-social",
+  "name": "Premium Social",
+  "category": "CREATOR_SOCIAL",
+  "description": "Modern creator aesthetic with soft dark container and electric blue key word highlights.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["social", "creator", "lifestyle", "blue", "modern", "aesthetic"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "rgba(0, 0, 0, 0.75)",
+    "color": "#60A5FA",
+    "fontFamily": "Montserrat, sans-serif",
+    "fontWeight": "700",
+    "borderRadius": "8px",
+    "padding": "6px 12px"
+  }
+}

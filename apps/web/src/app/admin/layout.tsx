@@ -33,9 +33,8 @@ export default function AdminLayout({
 
   const adminNav = [
     { label: "Overview", href: "/admin", icon: LayoutDashboard, exact: true },
-    { label: "User Accounts", href: "/admin/users", icon: Users },
+    { label: "Caption Styles", href: "/admin/styles", icon: Layers },
     { label: "All Projects", href: "/admin/projects", icon: Film },
-    { label: "Templates & Styles", href: "/admin/templates", icon: Layers },
     { label: "Font Manager", href: "/admin/fonts", icon: Type },
     { label: "Background Jobs", href: "/admin/jobs", icon: Activity },
     { label: "System Exports", href: "/admin/exports", icon: Download },
@@ -44,6 +43,11 @@ export default function AdminLayout({
     { label: "Server Logs", href: "/admin/logs", icon: FileText },
     { label: "System Config", href: "/admin/settings", icon: Settings },
   ];
+
+  // Allow login and dedicated style studio pages to manage their own layout
+  if (pathname === "/admin/login" || pathname?.startsWith("/admin/styles")) {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (
@@ -61,23 +65,23 @@ export default function AdminLayout({
           <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center mx-auto mb-4">
             <Lock className="w-6 h-6" />
           </div>
-          <h1 className="text-xl font-bold text-white mb-2">Access Restricted</h1>
+          <h1 className="text-xl font-bold text-white mb-2">Admin Control Required</h1>
           <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-            The Admin Console requires an account with Administrator or Super Administrator privileges.
-            Default local administrator credentials: <span className="text-slate-200 font-mono">admin@captionstudio.local</span> / <span className="text-slate-200 font-mono">admin123</span>
+            The Admin Console is restricted to authenticated administrators.
+            Please sign in with your local administrator password.
           </p>
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
             <Link
-              href="/login"
+              href="/admin/login"
               className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors"
             >
-              Sign In as Admin
+              Sign In to Admin
             </Link>
             <Link
-              href="/dashboard"
+              href="/create"
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
             >
-              Return to Dashboard
+              Back to Studio
             </Link>
           </div>
         </div>
@@ -104,7 +108,7 @@ export default function AdminLayout({
             </h2>
 
             <Link
-              href="/dashboard"
+              href="/create"
               className="mt-3 flex items-center gap-2 text-xs text-slate-400 hover:text-white p-2 rounded-lg bg-slate-950/80 border border-slate-800 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" /> Back to Creator Studio

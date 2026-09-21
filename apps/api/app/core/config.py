@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = Field(default="sqlite:///./data/database/captionstudio.db")
 
+    # Admin Authentication (PBKDF2-HMAC-SHA256)
+    ADMIN_PASSWORD_HASH: Optional[str] = None
+    ADMIN_SESSION_HOURS: int = 24
+
     # Storage & Data
     STORAGE_ROOT: str = "./storage"
     DATA_DIR: str = "./data"

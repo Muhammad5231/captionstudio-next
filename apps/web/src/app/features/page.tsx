@@ -18,7 +18,7 @@ import {
 
 export const metadata = {
   title: "Features | CaptionStudio",
-  description: "Explore the complete feature suite of CaptionStudio — local-first AI caption generation, 60+ styles, and hardware-accelerated video rendering.",
+  description: "Explore the complete feature suite of CaptionStudio — local-first AI caption generation, 15 Python styles, and hardware-accelerated video rendering.",
 };
 
 export default function FeaturesPage() {
@@ -40,15 +40,15 @@ export default function FeaturesPage() {
     },
     {
       badge: "Styling & Animations",
-      title: "60+ Designer Caption Styles & Kinetic Typography",
+      title: "15 Sandboxed Python Caption Styles & Kinetic Typography",
       description: "Transform raw subtitles into thumb-stopping social video hooks with one click. Pre-calibrated for viral short-form and professional long-form content.",
       features: [
-        "60+ built-in presets across TikTok, Reels, Documentary, Gaming, Neon, and Cinema",
+        "15 built-in sandboxed Python presets across TikTok, Reels, Documentary, Gaming, Neon, and Cinema",
         "Dynamic word-by-word karaoke highlights with customizable lead colors",
         "Pop, bounce, slide-in, typewriter, fade, and zoom text animation curves",
         "Full font control: upload custom .ttf/.otf or use bundled system fonts",
         "Multi-layered drop shadows, glowing halos, border outlines, and background boxes",
-        "Preset favoriting, cloning, and custom template creation for brand consistency",
+        "Admin Python style studio with live preview and safe AST-inspected execution",
       ],
       icon: Sparkles,
       color: "from-purple-500/20 to-pink-500/20 text-purple-400 border-purple-500/30",
@@ -191,7 +191,7 @@ export default function FeaturesPage() {
             href="/styles"
             className="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold border border-slate-700 transition-all"
           >
-            Browse 60+ Styles
+            Browse 15 Styles
           </Link>
         </div>
       </div>

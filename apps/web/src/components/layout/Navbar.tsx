@@ -5,19 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Sparkles,
-  LayoutDashboard,
   ShieldAlert,
   LogOut,
-  LogIn,
-  UserPlus,
+  Lock,
   Menu,
   X,
-  Layers,
   Palette,
-  FileText,
-  CreditCard,
-  Info,
-  HelpCircle,
+  Layers,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
@@ -33,11 +27,9 @@ export const Navbar: React.FC = () => {
   }
 
   const navLinks = [
-    { href: "/features", label: "Features" },
-    { href: "/styles", label: "Styles" },
-    { href: "/templates", label: "Templates" },
-    { href: "/pricing", label: "Pricing" },
-    { href: "/about", label: "About" },
+    { href: "/create", label: "Studio Studio", icon: Sparkles },
+    { href: "/styles", label: "Styles (15)", icon: Palette },
+    { href: "/features", label: "Features", icon: Layers },
   ];
 
   return (
@@ -75,27 +67,18 @@ export const Navbar: React.FC = () => {
           </nav>
         </div>
 
-        {/* Right CTA / Auth Status */}
+        {/* Right CTA / Admin Status */}
         <div className="hidden md:flex items-center gap-3">
-          {user ? (
+          {isAdmin ? (
             <div className="flex items-center gap-2.5">
-              {isAdmin && (
-                <Link href="/admin">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1.5 border-amber-800/60 bg-amber-950/30 text-amber-300 hover:bg-amber-900/40 text-xs"
-                  >
-                    <ShieldAlert className="h-3.5 w-3.5" />
-                    Admin Panel
-                  </Button>
-                </Link>
-              )}
-
-              <Link href="/dashboard">
-                <Button size="sm" variant="subtle" className="gap-1.5 text-xs">
-                  <LayoutDashboard className="h-3.5 w-3.5 text-indigo-400" />
-                  Dashboard
+              <Link href="/admin/styles">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 border-indigo-800/60 bg-indigo-950/30 text-indigo-300 hover:bg-indigo-900/40 text-xs"
+                >
+                  <ShieldAlert className="h-3.5 w-3.5 text-indigo-400" />
+                  Admin Studio
                 </Button>
               </Link>
 
@@ -108,33 +91,30 @@ export const Navbar: React.FC = () => {
 
               <div className="h-4 w-[1px] bg-zinc-800 mx-1" />
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-zinc-400 hidden lg:inline max-w-[120px] truncate">
-                  {user.name}
-                </span>
-                <button
-                  onClick={() => logout()}
-                  title="Log out"
-                  className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-zinc-900 rounded-lg transition-colors"
-                >
-                  <LogOut className="h-4 w-4" />
-                </button>
-              </div>
+              <button
+                onClick={() => logout()}
+                title="Log out from Admin"
+                className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-zinc-900 rounded-lg transition-colors flex items-center gap-1 text-xs"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Logout</span>
+              </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <Link href="/login">
-                <Button size="sm" variant="ghost" className="gap-1.5 text-xs">
-                  <LogIn className="h-3.5 w-3.5" />
-                  Login
+            <div className="flex items-center gap-2.5">
+              <Link href="/create">
+                <Button size="sm" className="gap-1.5 text-xs shadow-md shadow-indigo-600/20">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Create Captions
                 </Button>
               </Link>
 
-              <Link href="/signup">
-                <Button size="sm" className="gap-1.5 text-xs shadow-md shadow-indigo-600/20">
-                  <UserPlus className="h-3.5 w-3.5" />
-                  Get Started
-                </Button>
+              <Link
+                href="/admin/login"
+                title="Admin Control"
+                className="p-1.5 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 rounded-lg transition-colors"
+              >
+                <Lock className="h-3.5 w-3.5" />
               </Link>
             </div>
           )}
@@ -168,33 +148,22 @@ export const Navbar: React.FC = () => {
           </nav>
 
           <div className="pt-3 border-t border-zinc-800/80 space-y-2">
-            {user ? (
+            <Link
+              href="/create"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/30"
+            >
+              <Sparkles className="h-4 w-4" /> Create Captions
+            </Link>
+
+            {isAdmin ? (
               <>
-                <div className="px-3 py-1 text-xs text-zinc-400">
-                  Signed in as <span className="text-white font-medium">{user.email}</span>
-                </div>
-                {isAdmin && (
-                  <Link
-                    href="/admin"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-amber-300 bg-amber-950/40"
-                  >
-                    <ShieldAlert className="h-4 w-4" /> Admin Panel
-                  </Link>
-                )}
                 <Link
-                  href="/dashboard"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-900"
-                >
-                  <LayoutDashboard className="h-4 w-4 text-indigo-400" /> Workspace Dashboard
-                </Link>
-                <Link
-                  href="/create"
+                  href="/admin/styles"
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-indigo-300 bg-indigo-950/40"
                 >
-                  <Sparkles className="h-4 w-4" /> Create Captions
+                  <ShieldAlert className="h-4 w-4" /> Admin Studio
                 </Link>
                 <button
                   onClick={() => {
@@ -203,26 +172,17 @@ export const Navbar: React.FC = () => {
                   }}
                   className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-400 hover:bg-zinc-900"
                 >
-                  <LogOut className="h-4 w-4" /> Log Out
+                  <LogOut className="h-4 w-4" /> Admin Log Out
                 </button>
               </>
             ) : (
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-center rounded-lg border border-zinc-800 py-2 text-sm font-medium text-zinc-200"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/signup"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-center rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white"
-                >
-                  Get Started
-                </Link>
-              </div>
+              <Link
+                href="/admin/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-zinc-400 hover:text-zinc-200"
+              >
+                <Lock className="h-3.5 w-3.5" /> Admin Control
+              </Link>
             )}
           </div>
         </div>
@@ -230,4 +190,3 @@ export const Navbar: React.FC = () => {
     </header>
   );
 };
-

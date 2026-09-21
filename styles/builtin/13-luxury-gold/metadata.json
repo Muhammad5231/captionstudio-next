@@ -1,0 +1,21 @@
+{
+  "id": "luxury-gold",
+  "name": "Luxury Gold",
+  "category": "CINEMATIC",
+  "description": "Prestige champagne and metallic gold typography tailored for high-ticket and luxury brands.",
+  "version": 1,
+  "author": "CaptionStudio",
+  "tags": ["luxury", "gold", "prestige", "real-estate", "fashion", "high-end"],
+  "supported_aspect_ratios": ["16:9", "9:16", "1:1", "4:5"],
+  "thumbnail_css": {
+    "background": "#141005",
+    "color": "#FBF5B7",
+    "fontFamily": "Georgia, serif",
+    "fontWeight": "700",
+    "textTransform": "uppercase",
+    "letterSpacing": "2px",
+    "border": "1px solid #E6CA65",
+    "borderRadius": "4px",
+    "padding": "6px 12px"
+  }
+}
