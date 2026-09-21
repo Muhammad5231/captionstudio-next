@@ -333,3 +333,182 @@ def get_audit_logs(
 ):
     logs = db.query(AuditLog).order_by(AuditLog.created_at.desc()).offset(skip).limit(limit).all()
     return [AuditLogResponse.model_validate(l) for l in logs]
+
+
+@router.get("/analytics/exports")
+def get_export_analytics(
+    session: AdminSession = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """
+    Computes real production video export analytics directly from database records.
+    Never returns fabricated metrics.
+    """
+    all_exports = db.query(Export).all()
+    total_exports = len(all_exports)
+    completed_exports = sum(1 for e in all_exports if e.status == "COMPLETED")
+    failed_exports = sum(1 for e in all_exports if e.status == "FAILED")
+    queued_processing = sum(1 for e in all_exports if e.status in ("QUEUED", "PROCESSING"))
+
+    success_rate = round((completed_exports / total_exports * 100.0), 1) if total_exports > 0 else 100.0
+
+    total_bytes = sum(e.file_size or e.output_size or 0 for e in all_exports if e.status == "COMPLETED")
+    total_mb = round(total_bytes / (1024 * 1024), 2)
+
+    total_source_dur = sum(e.source_duration or 0.0 for e in all_exports if e.status == "COMPLETED")
+    total_render_dur = sum(e.output_duration or 0.0 for e in all_exports if e.status == "COMPLETED")
+
+    # Calculate actual render execution times (completed_at - started_at)
+    real_render_durations = []
+    for e in all_exports:
+        if e.status == "COMPLETED" and e.started_at and e.completed_at:
+            delta = (e.completed_at - e.started_at).total_seconds()
+            if delta > 0:
+                real_render_durations.append(delta)
+
+    avg_render_time = (
+        round(sum(real_render_durations) / len(real_render_durations), 1)
+        if real_render_durations
+        else 0.0
+    )
+
+    # Style frequency
+    styles_count: dict = {}
+    for e in all_exports:
+        s_name = e.style_name or e.style_id or "Default"
+        styles_count[s_name] = styles_count.get(s_name, 0) + 1
+
+    styles_breakdown = [
+        {
+            "name": name,
+            "count": cnt,
+            "percentage": round((cnt / total_exports) * 100.0, 1) if total_exports > 0 else 0.0,
+        }
+        for name, cnt in sorted(styles_count.items(), key=lambda x: x[1], reverse=True)
+    ]
+
+    # Encoder breakdown
+    encoder_count: dict = {}
+    for e in all_exports:
+        enc = e.encoder or "libx264"
+        encoder_count[enc] = encoder_count.get(enc, 0) + 1
+
+    encoders_breakdown = [
+        {"encoder": enc, "count": cnt}
+        for enc, cnt in sorted(encoder_count.items(), key=lambda x: x[1], reverse=True)
+    ]
+
+    # Format breakdown
+    format_count: dict = {}
+    for e in all_exports:
+        fmt = e.format or "MP4"
+        format_count[fmt] = format_count.get(fmt, 0) + 1
+
+    formats_breakdown = [
+        {"format": fmt, "count": cnt}
+        for fmt, cnt in sorted(format_count.items(), key=lambda x: x[1], reverse=True)
+    ]
+
+    return {
+        "total_exports": total_exports,
+        "completed_exports": completed_exports,
+        "failed_exports": failed_exports,
+        "queued_processing_exports": queued_processing,
+        "success_rate_percent": success_rate,
+        "total_render_duration_seconds": round(total_render_dur, 1),
+        "total_source_duration_seconds": round(total_source_dur, 1),
+        "average_render_time_seconds": avg_render_time,
+        "total_exported_bytes": total_bytes,
+        "total_exported_mb": total_mb,
+        "styles_breakdown": styles_breakdown,
+        "encoders_breakdown": encoders_breakdown,
+        "formats_breakdown": formats_breakdown,
+    }
+
+
+@router.get("/exports")
+def list_admin_exports(
+    status_filter: Optional[str] = Query(None, alias="status"),
+    skip: int = 0,
+    limit: int = 50,
+    session: AdminSession = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Lists exports with rich metadata and linked project titles for the admin dashboard."""
+    query = db.query(Export)
+    if status_filter:
+        query = query.filter(Export.status == status_filter.upper())
+    exports = query.order_by(Export.created_at.desc()).offset(skip).limit(limit).all()
+
+    items = []
+    for exp in exports:
+        proj = db.query(Project).filter(Project.id == exp.project_id).first()
+        items.append({
+            "id": exp.id,
+            "project_id": exp.project_id,
+            "project_name": proj.name if proj else "Unknown Project",
+            "format": exp.format,
+            "status": exp.status,
+            "storage_key": exp.storage_key,
+            "filename": exp.filename or exp.output_filename,
+            "file_size": exp.file_size or exp.output_size,
+            "source_filename": exp.source_filename,
+            "source_duration": exp.source_duration,
+            "source_width": exp.source_width,
+            "source_height": exp.source_height,
+            "source_fps": exp.source_fps,
+            "output_duration": exp.output_duration,
+            "output_width": exp.output_width,
+            "output_height": exp.output_height,
+            "output_fps": exp.output_fps,
+            "style_name": exp.style_name or exp.style_id,
+            "caption_language": exp.caption_language,
+            "encoder": exp.encoder,
+            "quality_preset": exp.quality_preset,
+            "error": exp.error,
+            "created_at": exp.created_at,
+            "started_at": exp.started_at,
+            "completed_at": exp.completed_at,
+        })
+    return items
+
+
+@router.get("/exports/{export_id}")
+def get_admin_export_detail(
+    export_id: str,
+    session: AdminSession = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Inspects full metadata and rendering parameters for an individual export."""
+    exp = db.query(Export).filter(Export.id == export_id).first()
+    if not exp:
+        raise HTTPException(status_code=404, detail="Export not found")
+
+    proj = db.query(Project).filter(Project.id == exp.project_id).first()
+    return {
+        "id": exp.id,
+        "project_id": exp.project_id,
+        "project_name": proj.name if proj else "Unknown Project",
+        "format": exp.format,
+        "status": exp.status,
+        "storage_key": exp.storage_key,
+        "filename": exp.filename or exp.output_filename,
+        "file_size": exp.file_size or exp.output_size,
+        "source_filename": exp.source_filename,
+        "source_duration": exp.source_duration,
+        "source_width": exp.source_width,
+        "source_height": exp.source_height,
+        "source_fps": exp.source_fps,
+        "output_duration": exp.output_duration,
+        "output_width": exp.output_width,
+        "output_height": exp.output_height,
+        "output_fps": exp.output_fps,
+        "style_name": exp.style_name or exp.style_id,
+        "caption_language": exp.caption_language,
+        "encoder": exp.encoder,
+        "quality_preset": exp.quality_preset,
+        "error": exp.error,
+        "created_at": exp.created_at,
+        "started_at": exp.started_at,
+        "completed_at": exp.completed_at,
+    }

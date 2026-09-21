@@ -8,7 +8,7 @@ interface CaptionPreviewRendererProps {
   videoUrl: string;
   captionTrack?: CaptionTrackData | null;
   renderSpec: CaptionRenderSpec;
-  aspectRatio: "16:9" | "9:16" | "1:1" | "4:5";
+  aspectRatio: "16:9" | "9:16" | "1:1" | "4:5" | "4:3";
   currentTime: number;
   showSafeArea?: boolean;
   onTimeUpdate?: (time: number) => void;
@@ -90,6 +90,7 @@ export const CaptionPreviewRenderer: React.FC<CaptionPreviewRendererProps> = ({
     "9:16": "aspect-[9/16] max-h-[620px]",
     "1:1": "aspect-square max-w-lg",
     "4:5": "aspect-[4/5] max-h-[620px]",
+    "4:3": "aspect-[4/3] max-w-xl",
   }[aspectRatio];
 
   const scaledFontSize = Math.round(renderSpec.fontSize * scale);

@@ -3,6 +3,9 @@ from typing import List, Optional
 from apps.api.app.services.transcription.base import TimedWord, TimedSegment
 
 
+from apps.api.app.services.subtitles.normalization import normalize_caption_text
+
+
 class GroupingOptions:
     def __init__(
         self,
@@ -11,12 +14,20 @@ class GroupingOptions:
         max_duration_seconds: float = 3.0,
         split_on_punctuation: bool = True,
         min_gap_seconds_to_split: float = 0.40,
+        language: str = "auto",
+        normalize: bool = False,
+        balance_multiline: bool = False,
+        max_chars_per_line: int = 34,
     ):
         self.max_words_per_segment = max_words_per_segment
         self.max_chars_per_segment = max_chars_per_segment
         self.max_duration_seconds = max_duration_seconds
         self.split_on_punctuation = split_on_punctuation
         self.min_gap_seconds_to_split = min_gap_seconds_to_split
+        self.language = language
+        self.normalize = normalize
+        self.balance_multiline = balance_multiline
+        self.max_chars_per_line = max_chars_per_line
 
 
 TERMINAL_PUNCTUATION = re.compile(r"[.?!,;:।]$")
@@ -29,6 +40,30 @@ class CaptionGroupingService:
     Applies punctuation boundaries, pause detection, reading cadence, and line length limits.
     """
 
+    def balance_multiline_text(self, text: str, max_chars_per_line: int = 34) -> str:
+        """
+        Balances longer segment text into a clean 2-line layout at the optimal word boundary.
+        """
+        words = text.split()
+        if len(words) <= 3 or len(text) <= max_chars_per_line:
+            return text
+
+        mid_char = len(text) // 2
+        best_split_idx = 1
+        min_dist = float("inf")
+        cum_len = 0
+
+        for i in range(len(words) - 1):
+            cum_len += len(words[i]) + 1
+            dist = abs(cum_len - mid_char)
+            if dist < min_dist:
+                min_dist = dist
+                best_split_idx = i + 1
+
+        line1 = " ".join(words[:best_split_idx])
+        line2 = " ".join(words[best_split_idx:])
+        return f"{line1}\n{line2}"
+
     def group_words(
         self,
         words: List[TimedWord],
@@ -40,6 +75,14 @@ class CaptionGroupingService:
         opts = options or GroupingOptions()
         segments: List[TimedSegment] = []
         current_words: List[TimedWord] = []
+
+        def build_segment_text(word_list: List[TimedWord]) -> str:
+            text = " ".join(w.word for w in word_list).strip()
+            if opts.normalize:
+                text = normalize_caption_text(text, language=opts.language)
+            if opts.balance_multiline:
+                text = self.balance_multiline_text(text, opts.max_chars_per_line)
+            return text
 
         for idx, word in enumerate(words):
             if not current_words:
@@ -79,7 +122,7 @@ class CaptionGroupingService:
             )
 
             if should_split:
-                seg_text = " ".join(w.word for w in current_words).strip()
+                seg_text = build_segment_text(current_words)
                 segments.append(
                     TimedSegment(
                         start=round(current_words[0].start, 3),
@@ -94,7 +137,7 @@ class CaptionGroupingService:
 
         # Flush remaining words
         if current_words:
-            seg_text = " ".join(w.word for w in current_words).strip()
+            seg_text = build_segment_text(current_words)
             segments.append(
                 TimedSegment(
                     start=round(current_words[0].start, 3),

@@ -542,28 +542,21 @@ export async function toggleFavoriteTemplate(templateId: string): Promise<{ favo
   }
 }
 
-// Phase 3: Admin Data Interfaces
+// Phase 3 & 4: Admin Data Interfaces
 export interface AdminOverviewData {
-  users: { total: number; active: number; admins: number; creators: number };
-  projects: { total: number; active: number; deleted: number };
-  jobs: { total: number; pending: number; processing: number; completed: number; failed: number };
-  exports: { total: number; videos: number; subtitles: number; total_size_bytes: number };
-  storage: {
-    total_bytes: number;
-    uploads_bytes: number;
-    exports_bytes: number;
-    audio_bytes: number;
-    temp_bytes: number;
-    database_bytes: number;
-  };
-  system: {
-    python_version: string;
-    platform: string;
-    cpu_count: number;
-    memory_total_gb: number;
-    memory_available_gb: number;
-    whisper_ready: boolean;
-    ffmpeg_ready: boolean;
+  total_projects: number;
+  total_exports: number;
+  total_jobs: number;
+  failed_jobs: number;
+  total_styles: number;
+  storage_used_bytes: number;
+  storage_used_mb: number;
+  storage_breakdown: {
+    uploads: number;
+    renders: number;
+    exports: number;
+    fonts: number;
+    temp: number;
   };
 }
 
@@ -636,50 +629,7 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
     headers: { ...getAuthHeaders() },
   });
   if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to fetch admin overview"));
-  const d = await res.json();
-  return {
-    users: {
-      total: d.total_users ?? 0,
-      active: d.active_users ?? 0,
-      admins: 1,
-      creators: (d.total_users ?? 1) - 1,
-    },
-    projects: {
-      total: d.total_projects ?? 0,
-      active: d.total_projects ?? 0,
-      deleted: 0,
-    },
-    jobs: {
-      total: d.total_jobs ?? 0,
-      pending: 0,
-      processing: 0,
-      completed: Math.max(0, (d.total_jobs ?? 0) - (d.failed_jobs ?? 0)),
-      failed: d.failed_jobs ?? 0,
-    },
-    exports: {
-      total: d.total_exports ?? 0,
-      videos: d.total_exports ?? 0,
-      subtitles: 0,
-      total_size_bytes: d.storage_used_bytes ?? 0,
-    },
-    storage: {
-      total_bytes: d.storage_used_bytes ?? 0,
-      uploads_bytes: d.storage_breakdown?.uploads ? d.storage_breakdown.uploads * 1024 * 1024 : 0,
-      exports_bytes: d.storage_breakdown?.exports ? d.storage_breakdown.exports * 1024 * 1024 : 0,
-      audio_bytes: d.storage_breakdown?.renders ? d.storage_breakdown.renders * 1024 * 1024 : 0,
-      temp_bytes: d.storage_breakdown?.temp ? d.storage_breakdown.temp * 1024 * 1024 : 0,
-      database_bytes: 65536,
-    },
-    system: {
-      python_version: "3.12.9",
-      platform: "Windows NT",
-      cpu_count: 8,
-      memory_total_gb: 16.0,
-      memory_available_gb: 8.5,
-      whisper_ready: true,
-      ffmpeg_ready: true,
-    },
-  };
+  return res.json();
 }
 
 export async function getAdminUsers(search?: string, skip: number = 0, limit: number = 50): Promise<AdminUserData[]> {
@@ -975,4 +925,76 @@ export async function adminUpdateStyle(
   if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to update style"));
   return res.json();
 }
+
+export interface ExportAnalyticsData {
+  total_exports: number;
+  completed_exports: number;
+  failed_exports: number;
+  queued_processing_exports: number;
+  success_rate_percent: number;
+  total_render_duration_seconds: number;
+  total_source_duration_seconds: number;
+  average_render_time_seconds: number;
+  total_exported_bytes: number;
+  total_exported_mb: number;
+  styles_breakdown: Array<{ name: string; count: number; percentage: number }>;
+  encoders_breakdown: Array<{ encoder: string; count: number }>;
+  formats_breakdown: Array<{ format: string; count: number }>;
+}
+
+export async function getAdminExportAnalytics(): Promise<ExportAnalyticsData> {
+  const res = await fetch(`${API_BASE}/admin/analytics/exports`, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to load export analytics"));
+  return res.json();
+}
+
+export interface AdminExportRecord {
+  id: string;
+  project_id: string;
+  project_name: string;
+  format: string;
+  status: string;
+  storage_key?: string;
+  filename?: string;
+  file_size?: number;
+  source_filename?: string;
+  source_duration?: number;
+  source_width?: number;
+  source_height?: number;
+  source_fps?: number;
+  output_duration?: number;
+  output_width?: number;
+  output_height?: number;
+  output_fps?: number;
+  style_name?: string;
+  caption_language?: string;
+  encoder?: string;
+  quality_preset?: string;
+  error?: string;
+  created_at: string;
+  started_at?: string;
+  completed_at?: string;
+}
+
+export async function listAdminExports(statusFilter?: string): Promise<AdminExportRecord[]> {
+  const url = statusFilter
+    ? `${API_BASE}/admin/exports?status=${encodeURIComponent(statusFilter)}`
+    : `${API_BASE}/admin/exports`;
+  const res = await fetch(url, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to load exports"));
+  return res.json();
+}
+
+export async function getAdminExportDetail(exportId: string): Promise<AdminExportRecord> {
+  const res = await fetch(`${API_BASE}/admin/exports/${exportId}`, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to load export details"));
+  return res.json();
+}
+
 

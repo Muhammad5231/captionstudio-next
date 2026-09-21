@@ -37,6 +37,7 @@ import {
 } from "@/lib/api";
 import { formatTime } from "@/lib/utils";
 import { useEditorHistory } from "@/hooks/useEditorHistory";
+import { useEditorShortcuts } from "@/hooks/useEditorShortcuts";
 import { CaptionPreviewRenderer } from "@/components/editor/CaptionPreviewRenderer";
 import { TimelineTrack } from "@/components/editor/TimelineTrack";
 import { StylesGallery } from "@/components/editor/StylesGallery";
@@ -84,7 +85,7 @@ export default function EditorPage({ params }: { params: Promise<{ projectId: st
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [videoUrl, setVideoUrl] = useState<string>("");
-  const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16" | "1:1" | "4:5">("16:9");
+  const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16" | "1:1" | "4:5" | "4:3">("16:9");
   const [showSafeArea, setShowSafeArea] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<"styles" | "typography" | "colors" | "position" | "animation">("styles");
   const [bottomMode, setBottomMode] = useState<"timeline" | "segments">("timeline");
@@ -228,6 +229,45 @@ export default function EditorPage({ params }: { params: Promise<{ projectId: st
     }
   };
 
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
+
+  const handleDuplicateSegment = () => {
+    if (!currentTrack || !selectedSegmentId) return;
+    const idx = currentTrack.segments.findIndex((s) => s.id === selectedSegmentId);
+    if (idx === -1) return;
+    const orig = currentTrack.segments[idx];
+    const newSeg = {
+      ...orig,
+      id: "seg_" + Math.random().toString(36).slice(2, 9),
+      start_time: orig.end_time,
+      end_time: orig.end_time + (orig.end_time - orig.start_time),
+      text: orig.text + " (copy)",
+    };
+    const nextSegs = [...currentTrack.segments.slice(0, idx + 1), newSeg, ...currentTrack.segments.slice(idx + 1)];
+    setCurrentTrack({ ...currentTrack, segments: nextSegs }, true);
+    setSelectedSegmentId(newSeg.id);
+  };
+
+  const handleDeleteSelected = () => {
+    if (!currentTrack || !selectedSegmentId) return;
+    const next = currentTrack.segments.filter((s) => s.id !== selectedSegmentId);
+    setCurrentTrack({ ...currentTrack, segments: next }, true);
+    setSelectedSegmentId(null);
+  };
+
+  useEditorShortcuts({
+    onTogglePlay: togglePlay,
+    onStepFrameForward: () => handleSeek(Math.min(duration, currentTime + 0.05)),
+    onStepFrameBackward: () => handleSeek(Math.max(0, currentTime - 0.05)),
+    onSeekForward: () => handleSeek(Math.min(duration, currentTime + 1.0)),
+    onSeekBackward: () => handleSeek(Math.max(0, currentTime - 1.0)),
+    onUndo: undo,
+    onRedo: redo,
+    onSave: handleSaveCaptions,
+    onExport: () => setIsExportOpen(true),
+    onDeleteSelected: handleDeleteSelected,
+  });
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-black text-zinc-400">
@@ -246,11 +286,11 @@ export default function EditorPage({ params }: { params: Promise<{ projectId: st
         {/* Left: Back & Project Info */}
         <div className="flex items-center gap-3">
           <Link
-            href="/projects"
+            href="/create"
             className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Projects</span>
+            <span>Studio</span>
           </Link>
           <span className="h-4 w-px bg-zinc-800" />
           <h1 className="font-semibold text-sm text-white truncate max-w-xs">
@@ -277,7 +317,7 @@ export default function EditorPage({ params }: { params: Promise<{ projectId: st
               onClick={redo}
               disabled={!canRedo}
               className="rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white disabled:opacity-30 transition-colors"
-              title="Redo (Ctrl+Y)"
+              title="Redo (Ctrl+Y / Ctrl+Shift+Z)"
             >
               <Redo2 className="h-4 w-4" />
             </button>
@@ -287,7 +327,7 @@ export default function EditorPage({ params }: { params: Promise<{ projectId: st
 
           {/* Aspect Ratio Switcher */}
           <div className="flex items-center rounded-lg border border-zinc-800 bg-zinc-900/60 p-0.5 text-xs">
-            {(["16:9", "9:16", "1:1", "4:5"] as const).map((ratio) => (
+            {(["16:9", "9:16", "1:1", "4:5", "4:3"] as const).map((ratio) => (
               <button
                 key={ratio}
                 onClick={() => setAspectRatio(ratio)}

@@ -53,7 +53,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       }
 
       // Connect to SSE stream for live progress
-      const eventSource = new EventSource(`${API_BASE}/jobs/${exportRec.job_id}/stream`);
+      const eventSource = new EventSource(`${API_BASE}/jobs/${exportRec.job_id}/events`);
 
       eventSource.onmessage = (event) => {
         try {

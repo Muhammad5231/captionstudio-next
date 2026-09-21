@@ -105,6 +105,46 @@ class FFmpegService:
         self.run_command(args)
         return out_p
 
+    _cached_encoders: Optional[List[str]] = None
+
+    def get_available_encoders(self) -> List[str]:
+        """Discovers available H.264 video encoders from local FFmpeg binary."""
+        if self._cached_encoders is not None:
+            return self._cached_encoders
+        try:
+            res = subprocess.run(
+                [self.binary, "-encoders"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+                timeout=5,
+            )
+            encoders = []
+            output = res.stdout
+            if "h264_nvenc" in output:
+                encoders.append("h264_nvenc")
+            if "h264_amf" in output:
+                encoders.append("h264_amf")
+            if "h264_videotoolbox" in output:
+                encoders.append("h264_videotoolbox")
+            if "libx264" in output or not encoders:
+                encoders.append("libx264")
+            self._cached_encoders = encoders
+            return encoders
+        except Exception as e:
+            logger.warning("Failed to probe FFmpeg encoders: %s", e)
+            self._cached_encoders = ["libx264"]
+            return ["libx264"]
+
+    def detect_best_encoder(self) -> str:
+        """Returns the optimal encoder: hardware GPU if available, else libx264."""
+        available = self.get_available_encoders()
+        for preferred in ("h264_nvenc", "h264_amf", "h264_videotoolbox"):
+            if preferred in available:
+                return preferred
+        return "libx264"
+
     def burn_subtitles(
         self,
         input_video_path: Path | str,
@@ -112,14 +152,16 @@ class FFmpegService:
         output_video_path: Path | str,
         fonts_dir: Optional[Path | str] = None,
         duration: Optional[float] = None,
-        crf: int = 20,
-        preset: str = "veryfast",
+        crf: int = 22,
+        preset: str = "fast",
+        encoder: Optional[str] = None,
+        has_audio: bool = True,
         progress_callback: Optional[object] = None,
-        timeout: int = 600,
+        timeout: int = 900,
     ) -> Path:
         """
-        Burns styled ASS subtitles directly into video frames with font resolution
-        and real-time progress callbacks.
+        Burns styled ASS subtitles directly into video frames with font resolution,
+        safe audio passthrough, hardware encoder support, and real-time progress callbacks.
         """
         import re
 
@@ -144,48 +186,73 @@ class FFmpegService:
 
         filter_arg = f"subtitles={escaped_sub}:fontsdir={escaped_fonts}"
 
-        args = [
-            "-i", str(in_p),
-            "-vf", filter_arg,
-            "-c:v", "libx264",
-            "-preset", preset,
-            "-crf", str(crf),
-            "-c:a", "copy",
-            str(out_p)
-        ]
+        target_encoder = encoder or "libx264"
+        available_encoders = self.get_available_encoders()
+        if target_encoder not in available_encoders:
+            target_encoder = "libx264"
 
-        full_cmd = [self.binary, "-y", "-hide_banner"] + args
-        logger.info("Executing burn_subtitles: %s", " ".join(full_cmd))
+        def build_args(enc: str) -> List[str]:
+            cmd = ["-i", str(in_p), "-vf", filter_arg]
+            if enc == "h264_nvenc":
+                cmd.extend(["-c:v", "h264_nvenc", "-preset", "p4", "-cq", str(crf)])
+            elif enc == "h264_amf":
+                cmd.extend(["-c:v", "h264_amf", "-quality", "speed", "-rc", "cqp", "-qp_i", str(crf), "-qp_p", str(crf)])
+            elif enc == "h264_videotoolbox":
+                cmd.extend(["-c:v", "h264_videotoolbox", "-q:v", str(crf)])
+            else:
+                cmd.extend(["-c:v", "libx264", "-preset", preset, "-crf", str(crf), "-pix_fmt", "yuv420p"])
 
-        proc = subprocess.Popen(
-            full_cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
+            if has_audio:
+                cmd.extend(["-c:a", "copy"])
+            else:
+                cmd.extend(["-an"])
 
-        time_regex = re.compile(r"time=(\d+):(\d+):(\d+\.\d+)")
-        total_duration = duration or 0.0
+            cmd.append(str(out_p))
+            return cmd
 
-        stderr_lines = []
-        if proc.stderr:
-            for line in iter(proc.stderr.readline, ""):
-                stderr_lines.append(line)
-                if progress_callback and callable(progress_callback) and total_duration > 0:
-                    match = time_regex.search(line)
-                    if match:
-                        h = int(match.group(1))
-                        m = int(match.group(2))
-                        s = float(match.group(3))
-                        current_sec = h * 3600 + m * 60 + s
-                        pct = min(99.0, max(0.0, (current_sec / total_duration) * 100.0))
-                        progress_callback(pct)
+        def execute_ffmpeg(args: List[str]) -> None:
+            full_cmd = [self.binary, "-y", "-hide_banner"] + args
+            logger.info("Executing burn_subtitles: %s", " ".join(full_cmd))
 
-        proc.wait(timeout=timeout)
-        if proc.returncode != 0:
-            err_msg = "".join(stderr_lines[-20:]) if stderr_lines else "Unknown FFmpeg error"
-            logger.error("FFmpeg subtitle burn-in failed: %s", err_msg)
-            raise RuntimeError(f"FFmpeg subtitle burn-in failed: {err_msg}")
+            proc = subprocess.Popen(
+                full_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+
+            time_regex = re.compile(r"time=(\d+):(\d+):(\d+\.\d+)")
+            total_duration = duration or 0.0
+
+            stderr_lines = []
+            if proc.stderr:
+                for line in iter(proc.stderr.readline, ""):
+                    stderr_lines.append(line)
+                    if progress_callback and callable(progress_callback) and total_duration > 0:
+                        match = time_regex.search(line)
+                        if match:
+                            h = int(match.group(1))
+                            m = int(match.group(2))
+                            s = float(match.group(3))
+                            current_sec = h * 3600 + m * 60 + s
+                            pct = min(99.0, max(0.0, (current_sec / total_duration) * 100.0))
+                            progress_callback(pct)
+
+            proc.wait(timeout=timeout)
+            if proc.returncode != 0:
+                err_msg = "".join(stderr_lines[-20:]) if stderr_lines else "Unknown FFmpeg error"
+                raise RuntimeError(f"FFmpeg subtitle burn-in failed: {err_msg}")
+
+        # Try with target encoder; if hardware acceleration fails, fallback to libx264
+        try:
+            execute_ffmpeg(build_args(target_encoder))
+        except Exception as e:
+            if target_encoder != "libx264":
+                logger.warning("Hardware encoder %s failed (%s). Falling back to libx264...", target_encoder, e)
+                target_encoder = "libx264"
+                execute_ffmpeg(build_args("libx264"))
+            else:
+                raise
 
         if progress_callback and callable(progress_callback):
             progress_callback(100.0)

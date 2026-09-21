@@ -174,6 +174,8 @@ class JobManager:
                 if proj:
                     proj.status = "FAILED"
                     db.commit()
+            except Exception:
+                db.rollback()
             finally:
                 db.close()
             await self.broadcast_progress(
@@ -249,7 +251,13 @@ class JobManager:
 
             # Stage 4: Caption Generation & Grouping
             await self.broadcast_progress(job_id, project_id, "PROCESSING", "CAPTION_GENERATION", 85.0, "Structuring and grouping caption segments...")
-            grouped_segments = caption_grouping_service.group_raw_segments(trans_result.segments)
+            from apps.api.app.services.captions.grouping_service import GroupingOptions
+            opts = GroupingOptions(
+                language=trans_result.language or "auto",
+                normalize=True,
+                balance_multiline=True,
+            )
+            grouped_segments = caption_grouping_service.group_raw_segments(trans_result.segments, options=opts)
 
             # Save canonical caption track
             track = CaptionTrack(
@@ -553,6 +561,14 @@ class JobManager:
             else:
                 spec = CaptionRenderSpec()
 
+            best_encoder = ffmpeg_service.detect_best_encoder()
+            export_rec.started_at = utc_now()
+            export_rec.style_name = getattr(spec, "name", None) or "Default Style"
+            export_rec.caption_language = track.language or "en"
+            export_rec.encoder = best_encoder
+            export_rec.quality_preset = preset
+            db.commit()
+
             clean_proj_name = "".join(c for c in project.name if c.isalnum() or c in ("-", "_")).strip() or "caption_export"
             vw = project.width or 1920
             vh = project.height or 1080
@@ -571,6 +587,12 @@ class JobManager:
                 in_video_path = storage_service.resolve_key(video_asset.storage_key)
                 out_filename = f"{clean_proj_name}_{export_id[:8]}.mp4"
                 out_file_path = exports_dir / out_filename
+
+                export_rec.source_filename = video_asset.original_filename
+                export_rec.source_duration = project.duration
+                export_rec.source_width = vw
+                export_rec.source_height = vh
+                db.commit()
 
                 await self.broadcast_progress(job_id, project_id, "PROCESSING", "BURNING_SUBTITLES", 10.0, "Starting FFmpeg subtitle burn-in...")
 
@@ -600,12 +622,29 @@ class JobManager:
                     duration=project.duration,
                     crf=crf,
                     preset=preset,
+                    encoder=best_encoder,
                     progress_callback=on_render_progress,
                 )
 
+                out_meta = export_service.last_output_meta
+                in_meta = export_service.last_input_meta
+
                 export_rec.storage_key = f"exports/{out_filename}"
                 export_rec.filename = out_filename
+                export_rec.output_filename = out_filename
                 export_rec.file_size = out_file_path.stat().st_size
+                export_rec.output_size = out_file_path.stat().st_size
+
+                if out_meta:
+                    export_rec.output_duration = out_meta.duration
+                    export_rec.output_width = out_meta.width
+                    export_rec.output_height = out_meta.height
+                    export_rec.output_fps = out_meta.fps
+                if in_meta:
+                    export_rec.source_fps = in_meta.fps
+                    if not export_rec.source_duration:
+                        export_rec.source_duration = in_meta.duration
+
                 export_rec.status = "COMPLETED"
                 export_rec.completed_at = utc_now()
                 db.commit()
@@ -616,7 +655,9 @@ class JobManager:
                 await asyncio.to_thread(export_service.export_srt, segments, out_file_path)
                 export_rec.storage_key = f"exports/{out_filename}"
                 export_rec.filename = out_filename
+                export_rec.output_filename = out_filename
                 export_rec.file_size = out_file_path.stat().st_size
+                export_rec.output_size = out_file_path.stat().st_size
                 export_rec.status = "COMPLETED"
                 export_rec.completed_at = utc_now()
                 db.commit()
@@ -627,7 +668,9 @@ class JobManager:
                 await asyncio.to_thread(export_service.export_vtt, segments, out_file_path)
                 export_rec.storage_key = f"exports/{out_filename}"
                 export_rec.filename = out_filename
+                export_rec.output_filename = out_filename
                 export_rec.file_size = out_file_path.stat().st_size
+                export_rec.output_size = out_file_path.stat().st_size
                 export_rec.status = "COMPLETED"
                 export_rec.completed_at = utc_now()
                 db.commit()
@@ -645,7 +688,9 @@ class JobManager:
                 )
                 export_rec.storage_key = f"exports/{out_filename}"
                 export_rec.filename = out_filename
+                export_rec.output_filename = out_filename
                 export_rec.file_size = out_file_path.stat().st_size
+                export_rec.output_size = out_file_path.stat().st_size
                 export_rec.status = "COMPLETED"
                 export_rec.completed_at = utc_now()
                 db.commit()
@@ -664,7 +709,9 @@ class JobManager:
                 await asyncio.to_thread(export_service.export_json, track_export_data, out_file_path)
                 export_rec.storage_key = f"exports/{out_filename}"
                 export_rec.filename = out_filename
+                export_rec.output_filename = out_filename
                 export_rec.file_size = out_file_path.stat().st_size
+                export_rec.output_size = out_file_path.stat().st_size
                 export_rec.status = "COMPLETED"
                 export_rec.completed_at = utc_now()
                 db.commit()
@@ -682,9 +729,14 @@ class JobManager:
             try:
                 if export_rec:
                     export_rec.status = "FAILED"
+                    export_rec.error = str(e)
+                    export_rec.completed_at = utc_now()
                     db.commit()
             except Exception:
                 pass
+            await self.broadcast_progress(
+                job_id, project_id, "FAILED", "ERROR", 100.0, f"Export failed: {e}", error=str(e)
+            )
             raise
         finally:
             db.close()

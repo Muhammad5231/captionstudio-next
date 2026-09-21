@@ -16,6 +16,9 @@ class MediaMetadata(BaseModel):
     height: Optional[int] = None
     fps: Optional[float] = None
     video_codec: Optional[str] = None
+    pix_fmt: Optional[str] = None
+    rotation: Optional[int] = None
+    color_space: Optional[str] = None
     has_video: bool = False
     audio_codec: Optional[str] = None
     audio_sample_rate: Optional[int] = None
@@ -84,10 +87,33 @@ class FFprobeService:
         video_codec = None
         has_video = video_stream is not None
 
+        pix_fmt = None
+        rotation = None
+        color_space = None
+
         if video_stream:
             width = int(video_stream.get("width", 0)) or None
             height = int(video_stream.get("height", 0)) or None
             video_codec = video_stream.get("codec_name")
+            pix_fmt = video_stream.get("pix_fmt")
+            color_space = video_stream.get("color_space") or video_stream.get("color_primaries")
+
+            # Extract rotation from tags or side_data_list
+            tags = video_stream.get("tags") or {}
+            if "rotate" in tags:
+                try:
+                    rotation = int(float(tags["rotate"]))
+                except (ValueError, TypeError):
+                    pass
+            if rotation is None:
+                for sd in video_stream.get("side_data_list", []):
+                    if "rotation" in sd:
+                        try:
+                            rotation = int(float(sd["rotation"]))
+                            break
+                        except (ValueError, TypeError):
+                            pass
+
             # Calculate FPS from r_frame_rate e.g. "30/1" or "30000/1001"
             r_fps = video_stream.get("r_frame_rate", "")
             if "/" in r_fps:
@@ -114,6 +140,9 @@ class FFprobeService:
             height=height,
             fps=fps,
             video_codec=video_codec,
+            pix_fmt=pix_fmt,
+            rotation=rotation,
+            color_space=color_space,
             has_video=has_video,
             audio_codec=audio_codec,
             audio_sample_rate=audio_sample_rate,

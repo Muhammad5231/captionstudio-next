@@ -59,3 +59,19 @@ class LogEntry(BaseModel):
     timestamp: str
     level: str
     message: str
+
+
+class ExportAnalyticsResponse(BaseModel):
+    total_exports: int
+    completed_exports: int
+    failed_exports: int
+    queued_processing_exports: int
+    success_rate_percent: float
+    total_render_duration_seconds: float
+    total_source_duration_seconds: float
+    average_render_time_seconds: float
+    total_exported_bytes: int
+    total_exported_mb: float
+    styles_breakdown: List[Dict[str, Any]]
+    encoders_breakdown: List[Dict[str, Any]]
+    formats_breakdown: List[Dict[str, Any]]

@@ -1,8 +1,8 @@
 # CaptionStudio — Local-First AI Captioning & Video Rendering Studio
 
-> **100% On-Device AI Speech Recognition • 60+ Animated Styles • Multi-Track Editor • Hardware-Accelerated FFmpeg Burn-In • Multi-User Workspace • Admin Control Center**
+> **100% On-Device AI Speech Recognition • 15 Sandboxed Python Styles • Multi-Track Editor • Hardware-Accelerated FFmpeg Burn-In • Accountless Public Workflow • Admin Telemetry Control Center**
 
-CaptionStudio is a complete production-grade application for creating viral, kinetic video subtitles without uploading your media to third-party cloud platforms or paying subscription fees.
+CaptionStudio is a complete production-grade application for creating viral, kinetic video subtitles without uploading media to third-party cloud platforms or paying subscription fees.
 
 ---
 
@@ -11,55 +11,55 @@ CaptionStudio is a complete production-grade application for creating viral, kin
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Next.js 15 Frontend                      │
-│     (React 19, TypeScript, Tailwind CSS, Local Auth)        │
+│        (React 19, TypeScript, Tailwind CSS, SSE)            │
 │                                                             │
-│   • Marketing Pages (/features, /styles, /templates, etc.)  │
-│   • Auth Pages (/login, /signup)                            │
-│   • Creator Workspace (/dashboard, /projects, /fonts, etc.) │
-│   • Studio Timeline Editor (/editor/[projectId])            │
-│   • Admin Console (/admin, /users, /jobs, /storage, etc.)   │
+│   • Frictionless Creator Flow (/create -> /editor/[id])     │
+│   • Real-Time RenderSpec Canvas Preview                     │
+│   • Multi-Track Interactive Timeline Track (Ruler/Media/Sub)│
+│   • Keyboard Shortcuts System (Play, Step, Split, Undo)     │
+│   • Admin Console (/admin, /admin/styles, /admin/exports)   │
 └──────────────────────────────┬──────────────────────────────┘
-                               │ REST API (/api/v1)
+                               │ REST API (/api/v1) & SSE Events
 ┌──────────────────────────────▼──────────────────────────────┐
 │                    FastAPI Python Backend                   │
-│         (Python 3.12+, SQLAlchemy 2.0, Local Auth)          │
+│         (Python 3.12+, SQLAlchemy 2.0, SQLite)              │
 ├──────────────────────────────┬──────────────────────────────┤
 │   Local AI Speech Engine     │   Media & Render Pipeline    │
 │   faster-whisper             │   FFmpeg, FFprobe, libass    │
-│   (CTranslate2, Word Timing) │   (NVENC, AMF, VideoToolbox) │
-└──────────────────────────────┴──────────────────────────────┘
+│   (CTranslate2, Word Timing) │   Two-Phase Atomic Render    │
+│   Hinglish Normalization     │   (NVENC, AMF, libx264)      │
+├──────────────────────────────┴──────────────────────────────┤
+│   Sandboxed Python Style Engine                             │
+│   Isolated Subprocess Execution • RenderSpec Contract       │
+│   15 Built-in Studio Styles (Viral, Minimal, Kinetic...)    │
+└──────────────────────────────┬──────────────────────────────┘
                                │
 ┌──────────────────────────────▼──────────────────────────────┐
 │                 Local Storage & Persistence                 │
 │   SQLite Database (storage/captionstudio.db)                │
-│   Directory Structure: uploads, audio, exports, temp, fonts │
+│   Directory Structure: uploads, exports, temp, fonts, styles │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔑 Default Local Accounts
+## 🔑 Access Architecture
 
-Upon initial launch, CaptionStudio auto-seeds two local credentials in SQLite:
-
-| Role | Email | Password | Access Level |
-|---|---|---|---|
-| **Administrator** | `admin@captionstudio.local` | `admin123` | Full access to `/admin` & `/dashboard` |
-| **Creator** | `user@captionstudio.local` | `user123` | Creator workspace & project editor |
-
-*Passwords are salted and hashed locally using PBKDF2-HMAC-SHA256 (100,000 rounds).*
+- **Public Creators**: No sign-up, login, or accounts required! Direct friction-free access to `/create` -> Upload -> Transcribe -> Interactive Editor -> Two-Phase MP4 Burn-In.
+- **Studio Administrator**: Secure session token authentication for `/admin` management console (default password: `admin` or configured via `ADMIN_SECRET`).
 
 ---
 
 ## ✨ Features
 
 - **100% Offline AI Transcription**: Powered by `faster-whisper` and CTranslate2 with sub-millisecond word timestamps.
-- **60+ Kinetic Caption Styles**: Pre-calibrated presets across TikTok, Reels, Shorts, Documentary, Neon, and Cinema.
-- **Professional Timeline Editor**: Word-by-word confidence ratings, split/merge segments (`S`/`M`), and safe-zone guides.
-- **Hardware-Accelerated Render Engine**: Direct subtitle burn-in via FFmpeg & `libass` utilizing NVIDIA NVENC, AMD AMF, or Apple VideoToolbox.
-- **Creator Dashboard**: Unified project manager, project duplication, soft-delete & restore, and custom font uploads.
-- **Admin Control Suite**: Real-time system diagnostics, background worker monitor, storage breakdown & safe cleanup, and live log streamer.
-- **Export Versatility**: Export burnt-in MP4s (1080p, 720p, 4K) or clean subtitle tracks (SRT, VTT, ASS, JSON).
+- **Hinglish Accuracy & Subtitle Normalization**: Preserves natural mixed-language cadences without forced translations, cleans stutters, and balances into 2-line maximum layouts.
+- **15 Sandboxed Python Caption Styles**: Pure Python styles executed in isolated, memory-capped subprocesses generating declarative `RenderSpec` contracts.
+- **Professional Multi-Track Timeline**: Word-by-word active timing, waveform rhythm visualization, split/merge/duplicate segments, and aspect ratio controls (16:9, 9:16, 1:1, 4:5, 4:3).
+- **Two-Phase Production Video Export**: Renders to staging before validating stream health, container integrity, and audio safety, then atomically moves to delivery.
+- **Real-Time SSE Event Streaming**: Live progress bars for video uploads, Whisper transcription, and FFmpeg frame encoding.
+- **Admin Telemetry & Delivery Inspector**: Inspect frame rates, render duration, encoding hardware, and media metadata directly from SQLite.
+- **Export Versatility**: Export burnt-in MP4s or clean subtitle tracks (SRT, VTT, ASS, JSON).
 
 ---
 

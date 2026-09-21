@@ -32,6 +32,25 @@ class ExportResponse(BaseModel):
     storage_key: Optional[str] = None
     file_size: Optional[int] = None
     filename: Optional[str] = None
+    source_filename: Optional[str] = None
+    source_duration: Optional[float] = None
+    source_width: Optional[int] = None
+    source_height: Optional[int] = None
+    source_fps: Optional[float] = None
+    output_filename: Optional[str] = None
+    output_duration: Optional[float] = None
+    output_width: Optional[int] = None
+    output_height: Optional[int] = None
+    output_fps: Optional[float] = None
+    output_size: Optional[int] = None
+    style_id: Optional[str] = None
+    style_name: Optional[str] = None
+    style_version: Optional[int] = None
+    caption_language: Optional[str] = None
+    encoder: Optional[str] = None
+    quality_preset: Optional[str] = None
+    error: Optional[str] = None
     created_at: Optional[datetime] = None
+    started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
 

@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Video,
   FileText,
@@ -8,35 +10,39 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
-  Clock,
   ArrowRight,
+  UploadCloud,
+  Film,
+  Cpu,
+  Info,
+  Clock,
+  RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
-import { Tabs } from "@/components/ui/Tabs";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Progress } from "@/components/ui/Progress";
-import { UploadZone } from "@/components/ui/UploadZone";
-import { VideoCaptionPreview } from "@/components/preview/VideoCaptionPreview";
-import { CaptionSegmentEditor } from "@/components/editor/CaptionSegmentEditor";
 import {
   createProject,
   uploadAsset,
   startTranscription,
   importSubtitles,
   getProject,
-  getAssetStreamUrl,
   ProjectData,
-  CaptionTrackData,
 } from "@/lib/api";
 
 type InputMode = "VIDEO" | "SUBTITLE" | "VIDEO_WITH_SUBTITLE";
 
-const VIDEO_EXTS = [".mp4", ".mov", ".webm", ".mkv", ".avi"];
-const SUBTITLE_EXTS = [".srt", ".vtt", ".ass", ".txt"];
+interface ClientMediaInfo {
+  filename: string;
+  sizeFormatted: string;
+  duration?: number;
+  width?: number;
+  height?: number;
+}
 
 export default function CreateStudioPage() {
+  const router = useRouter();
   const [mode, setMode] = useState<InputMode>("VIDEO");
   const [projectName, setProjectName] = useState("My New Project");
   const [language, setLanguage] = useState("auto");
@@ -45,42 +51,71 @@ export default function CreateStudioPage() {
   // Selected files
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [subtitleFile, setSubtitleFile] = useState<File | null>(null);
+  const [videoInfo, setVideoInfo] = useState<ClientMediaInfo | null>(null);
 
-  // Workflow state
+  // Workflow states
   const [isProcessing, setIsProcessing] = useState(false);
   const [jobStage, setJobStage] = useState("");
   const [jobProgress, setJobProgress] = useState(0);
   const [jobMessage, setJobMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
 
-  // Generated project state
-  const [project, setProject] = useState<ProjectData | null>(null);
-  const [captionTrack, setCaptionTrack] = useState<CaptionTrackData | null>(null);
-  const [videoStreamUrl, setVideoStreamUrl] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [seekRequestedTime, setSeekRequestedTime] = useState<number | null>(null);
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
-  const modeTabs = [
-    { id: "VIDEO", label: "Upload Video", icon: <Video className="h-4 w-4" /> },
-    { id: "SUBTITLE", label: "Subtitle Only", icon: <FileText className="h-4 w-4" /> },
-    { id: "VIDEO_WITH_SUBTITLE", label: "Video + Subtitle", icon: <Layers className="h-4 w-4" /> },
-  ];
+  // Inspect video metadata on the client when selected
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setVideoFile(file);
+    setError(null);
 
-  const languageOptions = [
-    { value: "auto", label: "Auto Detect Language (Preserves Spoken / Hinglish)" },
-    { value: "en", label: "English" },
-    { value: "hi", label: "Hindi" },
-    { value: "gu", label: "Gujarati" },
-  ];
+    // Default project name from file basename
+    const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+    if (baseName && projectName === "My New Project") {
+      setProjectName(baseName);
+    }
 
-  const chromaOptions = [
-    { value: "#00FF00", label: "Green Screen (#00FF00)" },
-    { value: "#0000FF", label: "Blue Screen (#0000FF)" },
-    { value: "#000000", label: "Black Background (#000000)" },
-  ];
+    // Inspect video via HTML5 video element for fast local duration & resolution preview
+    const tempUrl = URL.createObjectURL(file);
+    const videoEl = document.createElement("video");
+    videoEl.preload = "metadata";
+    videoEl.src = tempUrl;
+    videoEl.onloadedmetadata = () => {
+      setVideoInfo({
+        filename: file.name,
+        sizeFormatted: formatFileSize(file.size),
+        duration: videoEl.duration,
+        width: videoEl.videoWidth,
+        height: videoEl.videoHeight,
+      });
+      URL.revokeObjectURL(tempUrl);
+    };
+    videoEl.onerror = () => {
+      setVideoInfo({
+        filename: file.name,
+        sizeFormatted: formatFileSize(file.size),
+      });
+      URL.revokeObjectURL(tempUrl);
+    };
+  };
+
+  const handleSubtitleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubtitleFile(file);
+    setError(null);
+    if (!videoFile && projectName === "My New Project") {
+      const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+      setProjectName(baseName);
+    }
+  };
 
   // SSE event subscriber for live progress tracking
-  const subscribeToJobEvents = (jobId: string, projectId: string) => {
+  const subscribeToJobEvents = (jobId: string, projId: string) => {
     const eventSource = new EventSource(`/api/v1/jobs/${jobId}/events`);
 
     eventSource.onmessage = async (event) => {
@@ -92,47 +127,35 @@ export default function CreateStudioPage() {
 
         if (data.status === "COMPLETED") {
           eventSource.close();
-          // Fetch completed project details
-          const fullProject = await getProject(projectId);
-          setProject(fullProject);
-
-          // Find video asset to stream
-          const videoAsset = fullProject.assets.find((a) => a.type === "VIDEO");
-          if (videoAsset) {
-            setVideoStreamUrl(getAssetStreamUrl(videoAsset.id));
-          }
-
-          // Find default caption track
-          if (fullProject.caption_tracks && fullProject.caption_tracks.length > 0) {
-            setCaptionTrack(fullProject.caption_tracks[0]);
-          }
-
-          setIsProcessing(false);
+          setJobProgress(100);
+          setJobMessage("Project ready! Opening editor...");
+          setTimeout(() => {
+            router.push(`/editor/${projId}`);
+          }, 600);
         } else if (data.status === "FAILED") {
           eventSource.close();
           setIsProcessing(false);
-          setError(data.error || data.message || "Processing failed.");
+          setError(data.error || data.message || "Media processing failed. Please check file format.");
         }
       } catch (err) {
-        console.error("SSE parse error:", err);
+        console.error("SSE parsing error:", err);
       }
     };
 
     eventSource.onerror = () => {
-      console.warn("SSE connection error; falling back to polling if needed.");
+      console.warn("SSE connection closed or reconnected.");
     };
   };
 
   const handleStartGeneration = async () => {
     setError(null);
 
-    // Form validation
     if (mode === "VIDEO" && !videoFile) {
-      setError("Please select a video file.");
+      setError("Please select a video file (.mp4, .mov, .webm, .mkv).");
       return;
     }
     if (mode === "SUBTITLE" && !subtitleFile) {
-      setError("Please select a subtitle file.");
+      setError("Please select a subtitle file (.srt, .vtt, .ass, .txt).");
       return;
     }
     if (mode === "VIDEO_WITH_SUBTITLE" && (!videoFile || !subtitleFile)) {
@@ -140,50 +163,45 @@ export default function CreateStudioPage() {
       return;
     }
 
+    setIsProcessing(true);
+    setJobStage("INITIALIZING");
+    setJobProgress(5);
+    setJobMessage("Creating project record...");
+
     try {
-      setIsProcessing(true);
-      setJobStage("Initializing");
-      setJobProgress(5);
-      setJobMessage("Creating local project workspace...");
+      const proj = await createProject(projectName || "Untitled Project", mode);
+      setCreatedProjectId(proj.id);
 
-      // 1. Create Project
-      const proj = await createProject(projectName, mode);
-
-      // 2. Upload Assets
-      let videoAssetId: string | undefined;
-      let subtitleAssetId: string | undefined;
-
-      if (videoFile) {
-        setJobStage("Uploading");
-        setJobProgress(10);
-        setJobMessage(`Uploading video (${videoFile.name})...`);
-        const vAsset = await uploadAsset(proj.id, videoFile, "VIDEO");
-        videoAssetId = vAsset.asset.id;
-      }
-
-      if (subtitleFile) {
-        setJobStage("Uploading");
+      if (mode === "VIDEO" && videoFile) {
+        setJobStage("UPLOADING");
         setJobProgress(15);
-        setJobMessage(`Uploading subtitle (${subtitleFile.name})...`);
-        const sAsset = await uploadAsset(proj.id, subtitleFile, "SUBTITLE");
-        subtitleAssetId = sAsset.asset.id;
-      }
+        setJobMessage(`Uploading ${videoFile.name}...`);
+        const uploaded = await uploadAsset(proj.id, videoFile, "VIDEO");
 
-      // 3. Trigger Job Pipeline
-      if (mode === "VIDEO" && videoAssetId) {
-        setJobStage("Queuing");
-        setJobMessage("Triggering local transcription job...");
-        const job = await startTranscription(proj.id, videoAssetId, language);
+        setJobStage("QUEUED");
+        setJobProgress(30);
+        setJobMessage("Queueing faster-whisper speech recognition...");
+
+        const job = await startTranscription(proj.id, uploaded.asset.id, language || "auto");
         subscribeToJobEvents(job.id, proj.id);
-      } else if (mode === "SUBTITLE" && subtitleAssetId) {
-        setJobStage("Queuing");
-        setJobMessage("Triggering subtitle import & chroma rendering...");
-        const job = await importSubtitles(proj.id, subtitleAssetId, undefined, chromaColor);
+
+      } else if (mode === "SUBTITLE" && subtitleFile) {
+        setJobStage("UPLOADING");
+        setJobProgress(25);
+        setJobMessage(`Uploading ${subtitleFile.name}...`);
+        const uploaded = await uploadAsset(proj.id, subtitleFile, "SUBTITLE");
+
+        const job = await importSubtitles(proj.id, uploaded.asset.id, undefined, chromaColor);
         subscribeToJobEvents(job.id, proj.id);
-      } else if (mode === "VIDEO_WITH_SUBTITLE" && subtitleAssetId && videoAssetId) {
-        setJobStage("Queuing");
-        setJobMessage("Synchronizing video with external subtitles...");
-        const job = await importSubtitles(proj.id, subtitleAssetId, videoAssetId);
+
+      } else if (mode === "VIDEO_WITH_SUBTITLE" && videoFile && subtitleFile) {
+        setJobStage("UPLOADING");
+        setJobProgress(20);
+        setJobMessage(`Uploading media and subtitles...`);
+        const videoRes = await uploadAsset(proj.id, videoFile, "VIDEO");
+        const subRes = await uploadAsset(proj.id, subtitleFile, "SUBTITLE");
+
+        const job = await importSubtitles(proj.id, subRes.asset.id, videoRes.asset.id);
         subscribeToJobEvents(job.id, proj.id);
       }
     } catch (err: any) {
@@ -192,212 +210,298 @@ export default function CreateStudioPage() {
     }
   };
 
-  const resetStudio = () => {
-    setProject(null);
-    setCaptionTrack(null);
-    setVideoStreamUrl(null);
-    setVideoFile(null);
-    setSubtitleFile(null);
-    setJobProgress(0);
-    setError(null);
-  };
-
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Studio View: Active Project Preview & Editor */}
-      {project && videoStreamUrl ? (
-        <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800 pb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-white">{project.name}</h1>
-                <span className="rounded-md bg-emerald-950/80 border border-emerald-800/60 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
-                  Ready
-                </span>
-              </div>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Source: {project.source_type} &bull; Language: {project.language || "en"}
-                {project.duration && ` • Duration: ${project.duration.toFixed(1)}s`}
-              </p>
-            </div>
-            <Button variant="outline" size="sm" onClick={resetStudio}>
-              New Project
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left: Video Preview Player */}
-            <div className="lg:col-span-7 space-y-3">
-              <VideoCaptionPreview
-                videoUrl={videoStreamUrl}
-                captionTrack={captionTrack}
-                onTimeUpdate={(time) => setCurrentTime(time)}
-                externalSeekTime={seekRequestedTime}
-              />
-              <p className="text-[11px] text-zinc-500 text-center">
-                Phase 1 Default Caption Overlay: White text &bull; Safe margins &bull;
-                Synchronized word timing
-              </p>
-            </div>
-
-            {/* Right: Caption Segment Inspector & Editor */}
-            <div className="lg:col-span-5 h-[520px]">
-              {captionTrack ? (
-                <CaptionSegmentEditor
-                  projectId={project.id}
-                  captionTrack={captionTrack}
-                  currentTime={currentTime}
-                  onSeek={(time) => setSeekRequestedTime(time)}
-                  onTrackUpdated={(updated) => setCaptionTrack(updated)}
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950 p-6 text-center text-xs text-zinc-400">
-                  No caption tracks available for this project.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : (
-        /* Creation View: Upload & Configuration Form */
-        <div className="mx-auto max-w-3xl space-y-8">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        {/* Header Breadcrumb */}
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">
-              Create New Captions
+            <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">
+              Project Initialization
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-1">
+              Create New Caption Project
             </h1>
-            <p className="mt-1 text-xs text-zinc-400">
-              Select your media source, configure local parameters, and generate
-              frame-accurate captions.
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+              Extract word-level AI captions from video or import external subtitle tracks locally.
             </p>
           </div>
 
-          {/* Mode Selector Tabs */}
-          <Tabs
-            tabs={modeTabs}
-            activeTab={mode}
-            onChange={(id) => {
-              setMode(id as InputMode);
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="text-xs text-zinc-400 hover:text-white">
+              Back to Home
+            </Button>
+          </Link>
+        </div>
+
+        {/* Mode Selector Tabs */}
+        <div className="grid grid-cols-3 gap-2 bg-zinc-900/70 p-1.5 rounded-xl border border-zinc-800/80 mb-6">
+          <button
+            onClick={() => {
+              setMode("VIDEO");
               setError(null);
             }}
-          />
+            disabled={isProcessing}
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+              mode === "VIDEO"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <Video className="h-4 w-4" />
+            <span>Upload Video</span>
+          </button>
 
-          <Card>
-            <CardContent className="space-y-6 pt-4">
-              {/* Project Title */}
+          <button
+            onClick={() => {
+              setMode("SUBTITLE");
+              setError(null);
+            }}
+            disabled={isProcessing}
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+              mode === "SUBTITLE"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            <span>Subtitle Only</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setMode("VIDEO_WITH_SUBTITLE");
+              setError(null);
+            }}
+            disabled={isProcessing}
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+              mode === "VIDEO_WITH_SUBTITLE"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <Layers className="h-4 w-4" />
+            <span>Video + Subtitle</span>
+          </button>
+        </div>
+
+        {/* Main Configuration Card */}
+        <Card className="border-zinc-800 bg-zinc-900/50 backdrop-blur-sm shadow-xl mb-6">
+          <CardContent className="p-6 space-y-6">
+            {/* Project Name */}
+            <div>
+              <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                Project Name
+              </label>
               <Input
-                label="Project Name"
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
-                placeholder="e.g. My Podcast Episode 1"
+                placeholder="My Viral Reel"
+                disabled={isProcessing}
+                className="bg-zinc-950 border-zinc-800 text-sm focus:border-indigo-500"
               />
+            </div>
 
-              {/* Mode A: Video Upload */}
-              {mode === "VIDEO" && (
-                <div className="space-y-4">
-                  <UploadZone
-                    label="Upload Video File"
-                    sublabel="Drag and drop or click to select video"
-                    acceptedExtensions={VIDEO_EXTS}
-                    maxSizeMB={500}
-                    selectedFile={videoFile}
-                    onFileSelect={(f) => setVideoFile(f)}
+            {/* Video File Dropzone */}
+            {(mode === "VIDEO" || mode === "VIDEO_WITH_SUBTITLE") && (
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                  Source Video File (.mp4, .mov, .webm, .mkv)
+                </label>
+                <div className="relative border-2 border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-950/60 rounded-xl p-6 text-center transition-colors">
+                  <input
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/webm,video/x-matroska,.mkv"
+                    onChange={handleVideoSelect}
+                    disabled={isProcessing}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                   />
+                  <div className="flex flex-col items-center pointer-events-none">
+                    <UploadCloud className="h-8 w-8 text-indigo-400 mb-2" />
+                    {videoFile ? (
+                      <div className="text-xs">
+                        <span className="font-semibold text-emerald-400">{videoFile.name}</span>
+                        <span className="text-zinc-500 ml-2">({formatFileSize(videoFile.size)})</span>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="text-xs font-medium text-zinc-200">
+                          Click to browse or drop your video file here
+                        </span>
+                        <span className="text-[11px] text-zinc-500 mt-1">
+                          Up to 4K resolution supported locally
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
 
-                  <Select
-                    label="Spoken Language"
-                    options={languageOptions}
+                {/* Video Metadata Inspector Preview */}
+                {videoInfo && (
+                  <div className="mt-3 bg-zinc-950 border border-zinc-800/80 rounded-lg p-3 text-xs text-zinc-400 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div>
+                      <span className="text-zinc-500 block text-[10px] uppercase">File Size</span>
+                      <span className="text-zinc-200 font-mono">{videoInfo.sizeFormatted}</span>
+                    </div>
+                    {videoInfo.duration !== undefined && (
+                      <div>
+                        <span className="text-zinc-500 block text-[10px] uppercase">Duration</span>
+                        <span className="text-zinc-200 font-mono">{videoInfo.duration.toFixed(1)}s</span>
+                      </div>
+                    )}
+                    {videoInfo.width && videoInfo.height && (
+                      <div>
+                        <span className="text-zinc-500 block text-[10px] uppercase">Resolution</span>
+                        <span className="text-zinc-200 font-mono">
+                          {videoInfo.width} &times; {videoInfo.height}
+                        </span>
+                      </div>
+                    )}
+                    {videoInfo.width && videoInfo.height && (
+                      <div>
+                        <span className="text-zinc-500 block text-[10px] uppercase">Aspect Ratio</span>
+                        <span className="text-indigo-400 font-mono font-medium">
+                          {videoInfo.width < videoInfo.height ? "9:16 (Vertical)" : "16:9 (Landscape)"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Subtitle File Dropzone */}
+            {(mode === "SUBTITLE" || mode === "VIDEO_WITH_SUBTITLE") && (
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                  Subtitle Track (.srt, .vtt, .ass, .txt)
+                </label>
+                <div className="relative border-2 border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-950/60 rounded-xl p-5 text-center transition-colors">
+                  <input
+                    type="file"
+                    accept=".srt,.vtt,.ass,.txt"
+                    onChange={handleSubtitleSelect}
+                    disabled={isProcessing}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  />
+                  <div className="flex flex-col items-center pointer-events-none">
+                    <FileText className="h-7 w-7 text-purple-400 mb-2" />
+                    {subtitleFile ? (
+                      <span className="text-xs font-semibold text-emerald-400">
+                        {subtitleFile.name} ({formatFileSize(subtitleFile.size)})
+                      </span>
+                    ) : (
+                      <>
+                        <span className="text-xs font-medium text-zinc-200">
+                          Click to browse or drop your subtitle file here
+                        </span>
+                        <span className="text-[11px] text-zinc-500 mt-1">
+                          SRT, WebVTT, ASS format supported
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Language & Chroma Options */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              {mode !== "SUBTITLE" && (
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                    Speech Language
+                  </label>
+                  <select
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
-                  />
+                    disabled={isProcessing}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="auto">Auto Detect (Preserves Spoken / Hinglish)</option>
+                    <option value="en">English</option>
+                    <option value="hi">Hindi (Devanagari &amp; Roman)</option>
+                    <option value="gu">Gujarati</option>
+                  </select>
                 </div>
               )}
 
-              {/* Mode B: Subtitle Only */}
               {mode === "SUBTITLE" && (
-                <div className="space-y-4">
-                  <UploadZone
-                    label="Upload Subtitle File"
-                    sublabel="Select an SRT, VTT, ASS, or TXT transcript"
-                    acceptedExtensions={SUBTITLE_EXTS}
-                    selectedFile={subtitleFile}
-                    onFileSelect={(f) => setSubtitleFile(f)}
-                  />
-
-                  <Select
-                    label="Chroma Key Background Canvas"
-                    options={chromaOptions}
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                    Chroma Key Overlay Canvas
+                  </label>
+                  <select
                     value={chromaColor}
                     onChange={(e) => setChromaColor(e.target.value)}
-                  />
-                  <p className="text-[11px] text-zinc-400">
-                    Subtitle-only projects automatically generate a solid chroma
-                    background video for immediate preview and export.
-                  </p>
+                    disabled={isProcessing}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="#00FF00">Green Screen (#00FF00)</option>
+                    <option value="#0000FF">Blue Screen (#0000FF)</option>
+                    <option value="#000000">Black Canvas (#000000)</option>
+                  </select>
                 </div>
               )}
+            </div>
 
-              {/* Mode C: Video + Subtitle */}
-              {mode === "VIDEO_WITH_SUBTITLE" && (
-                <div className="space-y-5">
-                  <UploadZone
-                    label="Upload Video"
-                    acceptedExtensions={VIDEO_EXTS}
-                    selectedFile={videoFile}
-                    onFileSelect={(f) => setVideoFile(f)}
-                  />
-
-                  <UploadZone
-                    label="Upload External Subtitles (.srt, .vtt, .ass)"
-                    acceptedExtensions={SUBTITLE_EXTS}
-                    selectedFile={subtitleFile}
-                    onFileSelect={(f) => setSubtitleFile(f)}
-                  />
+            {/* Error Message Box */}
+            {error && (
+              <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-rose-300">
+                  <div className="font-semibold text-rose-200 mb-0.5">Processing Error</div>
+                  <div>{error}</div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Error Message */}
-              {error && (
-                <div className="flex items-center gap-2 rounded-xl bg-rose-950/40 border border-rose-900/60 p-3 text-xs text-rose-300">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {/* Live Progress Bar when Processing */}
-              {isProcessing && (
-                <div className="space-y-3 rounded-xl border border-indigo-900/50 bg-indigo-950/20 p-4">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-indigo-300 flex items-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5 animate-spin" />
-                      Stage: {jobStage}
-                    </span>
-                    <span className="font-mono text-zinc-300">
-                      {jobProgress.toFixed(0)}%
+            {/* Live Progress Card when Processing */}
+            {isProcessing && (
+              <div className="bg-zinc-950 border border-indigo-500/30 rounded-xl p-5 space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+                    <span className="font-bold text-white uppercase tracking-wider text-[11px]">
+                      {jobStage || "Processing"}
                     </span>
                   </div>
-                  <Progress value={jobProgress} />
-                  <p className="text-xs text-zinc-400">{jobMessage}</p>
+                  <span className="font-mono text-indigo-400 font-semibold">{Math.round(jobProgress)}%</span>
                 </div>
-              )}
 
-              {/* Action CTA */}
-              <div className="pt-2">
-                <Button
-                  onClick={handleStartGeneration}
-                  disabled={isProcessing}
-                  isLoading={isProcessing}
-                  size="lg"
-                  className="w-full gap-2 text-sm"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {isProcessing ? "Processing Locally..." : "Generate Captions Locally"}
-                </Button>
+                <Progress value={jobProgress} className="h-2 bg-zinc-800" />
+
+                <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1">
+                  <span>{jobMessage || "Analyzing audio frames..."}</span>
+                  <span className="font-mono text-zinc-500">Local Engine</span>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            )}
+
+            {/* Action CTA Button */}
+            <div className="pt-2">
+              <Button
+                onClick={handleStartGeneration}
+                disabled={isProcessing}
+                className="w-full py-3 text-sm font-semibold shadow-md shadow-indigo-600/25 flex items-center justify-center gap-2"
+              >
+                {isProcessing ? (
+                  <>
+                    <RotateCw className="h-4 w-4 animate-spin" />
+                    <span>Processing Media...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    <span>Generate Captions &amp; Open Studio</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
-
